@@ -1,17 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Producer Linker • Basement Noise</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basement Noise Producer Type Beat Linker</title>
+    <!-- p5.js libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/addons/p5.sound.min.js"></script>
+    
+    <!-- Link to your new CSS file -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
-    <h1>Producer Linker</h1>
-    <div id="app"></div>
-  </main>
+    <h2 id="logo-title">Basement Noise</h2>
+    <h1>Producer Type Beat Linker</h1>
 
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
-  <script src="./sketch.js"></script>
+    <!-- UI Controls -->
+    <div id="ui-container">
+        <label for="upload-face" class="ui-button">Upload Producer</label>
+        <input type="file" id="upload-face" accept="image/*">
+        
+        <input type="text" id="topic-input" placeholder="Add genre/vibe...">
+        <button id="add-topic" class="ui-button">Add Vibe</button>
+        <button id="link-button" class="ui-button">LINK BEAT</button>
+        <button id="reset-button" class="ui-button">Reset Links</button>
+        <!-- MODIFIED: "Remove Last" button text updated -->
+        <button id="remove-button" class="ui-button">Remove Last Unlinked</button>
+    </div>
+
+    <!-- p5.js Canvas Container -->
+    <div id="canvas-container"></div>
+    <!-- Scanline Overlay -->
+    <div id="scanline-overlay"></div>
+
+    <!-- Link to your new JavaScript file -->
+    <script src="sketch.js"></script>
 </body>
 </html>
