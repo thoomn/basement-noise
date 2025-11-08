@@ -6,640 +6,417 @@ let canvas;
 
 // --- Sound Effect Globals ---
 let noise, noiseEnv, osc, oscEnv;
-// NEW: Sound for error/fail state
-let oscFail, oscFailEnv; 
+// Sound for error/fail state
+let oscFail, oscFailEnv;
 let soundInitialized = false;
 let notes = [110.00, 130.81, 146.83, 164.81, 196.00, 220.00]; // A2, C3, D3, E3, G3, A3
 
-// --- NEW: Interaction Globals ---
-let draggedObject = null; // Stores the object being dragged
-let shakeAmount = 0; // For screen shake effect
+// Interaction
+let draggedObject = null; // object being dragged
+let shakeAmount = 0; // screen shake
 
-// NEW: Array for "zap" link effects
+// Array for "zap" link effects
 let zaps = [];
 
-// --- Constants ---
-const FACE_SIZE = 80; // Diameter of the face image
+// Constants
+const FACE_SIZE = 80; // diameter of the face image
 const TOPIC_HEIGHT = 30;
-const PARTICLE_COUNT = 30; // Base particle count
+const PARTICLE_COUNT = 30;
 
 // --- p5.js Setup ---
 function setup() {
-    canvas = createCanvas(800, 500);
-    canvas.parent('canvas-container');
-    
-    pixelDensity(1);
-    frameRate(60);
-    textAlign(CENTER, CENTER);
-    textFont('Courier New');
-    // NEW: Set rect mode globally
-    rectMode(CENTER);
-    
-    // --- UI Element Listeners ---
-    document.getElementById('upload-face').addEventListener('change', (event) => {
-        if (event.target.files && event.target.files[0]) {
-            let file = event.target.files[0];
-            let reader = new FileReader();
-            reader.onload = (e) => {
-                loadImage(e.target.result, (loadedImg) => {
-                    faces.push(new Face(loadedImg));
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+  canvas = createCanvas(800, 500);
+  canvas.parent('canvas-container');
 
-    select('#add-topic').mousePressed(addTopic);
-    select('#topic-input').elt.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') addTopic();
-    });
-    
-    select('#link-button').mousePressed(linkRandom);
-    select('#reset-button').mousePressed(resetLinks);
-    select('#remove-button').mousePressed(removeLast);
+  pixelDensity(1);
+  frameRate(60);
+  textAlign(CENTER, CENTER);
+  textFont('Courier New');
+  rectMode(CENTER);
+
+  // UI listeners
+  document.getElementById('upload-face').addEventListener('change', (event) => {
+    if (event.target.files && event.target.files[0]) {
+      let file = event.target.files[0];
+      let reader = new FileReader();
+      reader.onload = (e) => {
+        loadImage(e.target.result, (loadedImg) => {
+          faces.push(new Face(loadedImg));
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  select('#add-topic').mousePressed(addTopic);
+  select('#topic-input').elt.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') addTopic();
+  });
+
+  select('#link-button').mousePressed(linkRandom);
+  select('#reset-button').mousePressed(resetLinks);
+  select('#remove-button').mousePressed(removeLast);
 }
 
 // --- p5.js Draw Loop ---
 function draw() {
-    // NEW: Screen shake effect
-    push();
-    if (shakeAmount > 0) {
-        translate(random(-shakeAmount, shakeAmount), random(-shakeAmount, shakeAmount));
-        shakeAmount -= 1; // Decrease shake over time
-    }
+  // Screen shake
+  push();
+  if (shakeAmount > 0) {
+    translate(random(-shakeAmount, shakeAmount), random(-shakeAmount, shakeAmount));
+    shakeAmount -= 1;
+  }
 
-    // NEW: Draw full-screen static instead of background
-    drawStatic();
+  // Background static
+  drawStatic();
 
-    // Update and display particles
-    for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
-        particles[i].display();
-        if (particles[i].isDead()) {
-            particles.splice(i, 1);
-        }
-    }
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    particles[i].display();
+    if (particles[i].isDead()) particles.splice(i, 1);
+  }
 
-    // NEW: Draw link "zap" effects
-    for (let i = zaps.length - 1; i >= 0; i--) {
-        drawZap(zaps[i]);
-        zaps[i].life--;
-        if (zaps[i].life <= 0) {
-            zaps.splice(i, 1);
-        }
-    }
+  // Zap effects
+  for (let i = zaps.length - 1; i >= 0; i--) {
+    drawZap(zaps[i]);
+    zaps[i].life--;
+    if (zaps[i].life <= 0) zaps.splice(i, 1);
+  }
 
-    // --- NEW: Check Hovers (no physics) ---
-    let somethingIsHovered = false;
-    // Check topics first (they draw on top)
-    for (let i = topics.length - 1; i >= 0; i--) {
-        if (topics[i].checkHover()) {
-            somethingIsHovered = true;
-        }
-    }
-    // Check faces
-    for (let i = faces.length - 1; i >= 0; i--) {
-        // Don't check hover on face if a topic on top of it is already hovered
-        if (!somethingIsHovered && faces[i].checkHover()) {
-            somethingIsHovered = true;
-        }
-    }
-    
-    // --- Set Cursor Style ---
-    if (draggedObject) {
-        canvas.style('cursor', 'grabbing');
-    } else if (somethingIsHovered) {
-        canvas.style('cursor', 'grab');
-    } else {
-        canvas.style('cursor', 'default');
-    }
+  // Hover checks
+  let somethingIsHovered = false;
+  for (let i = topics.length - 1; i >= 0; i--) if (topics[i].checkHover()) somethingIsHovered = true;
+  for (let i = faces.length - 1; i >= 0; i--) if (!somethingIsHovered && faces[i].checkHover()) somethingIsHovered = true;
 
-    // Update and display faces
-    for (let f of faces) {
-        f.update();
-        f.display();
-    }
-    
-    // Update and display topics
-    // Topics are drawn *after* faces so linked topics appear on top
-    for (let t of topics) {
-        t.update();
-        t.display();
-    }
-    
-    // Draw retro noise effect (speckles)
-    drawSpeckles();
+  // Cursor style
+  if (draggedObject) canvas.style('cursor', 'grabbing');
+  else if (somethingIsHovered) canvas.style('cursor', 'grab');
+  else canvas.style('cursor', 'default');
 
-    // NEW: Reset translation matrix after shake
-    pop();
+  // Faces
+  for (let f of faces) { f.update(); f.display(); }
+  // Topics (drawn after faces)
+  for (let t of topics) { t.update(); t.display(); }
+
+  // Retro speckles
+  drawSpeckles();
+
+  pop();
 }
 
-// --- UI Callback Functions ---
+// --- UI Callbacks ---
 function addTopic() {
-    let text = select('#topic-input').value();
-    if (text.trim() === '') return;
-    topics.push(new Topic(text));
-    select('#topic-input').value('');
+  let text = select('#topic-input').value();
+  if (text.trim() === '') return;
+  topics.push(new Topic(text));
+  select('#topic-input').value('');
 }
 
 function createParticleBurst(x, y) {
-    // NEW: More particles for a bigger burst
-    for (let i = 0; i < PARTICLE_COUNT * 1.5; i++) {
-        particles.push(new Particle(x, y));
-    }
+  for (let i = 0; i < PARTICLE_COUNT * 1.5; i++) {
+    particles.push(new Particle(x, y));
+  }
 }
 
-/**
- * Finds one unlinked face and one unlinked topic and links them.
- */
+// Finds one unlinked face and one unlinked topic and links them.
 function linkRandom() {
-    let unlinkedFaces = faces.filter(f => !f.linkedTopic);
-    let unlinkedTopics = topics.filter(t => !t.isLinked);
+  let unlinkedFaces = faces.filter(f => !f.linkedTopic);
+  let unlinkedTopics = topics.filter(t => !t.isLinked);
 
-    if (unlinkedFaces.length > 0 && unlinkedTopics.length > 0) {
-        let randomFace = unlinkedFaces[floor(random(unlinkedFaces.length))];
-        let randomTopic = unlinkedTopics[floor(random(unlinkedTopics.length))];
-        
-        // Create the two-way link
-        randomFace.linkedTopic = randomTopic;
-        randomTopic.isLinked = true;
-        randomTopic.linkedFace = randomFace; 
-        
-        randomFace.triggerGlitch();
-        createParticleBurst(randomFace.pos.x, randomFace.pos.y);
-        
-        // NEW: Add a "zap" effect
-        zaps.push({ 
-            from: randomFace.pos.copy(), 
-            to: randomTopic.pos.copy(), 
-            life: 20 // 20 frames long
-        });
-        
-        if (soundInitialized) {
-            let randomNote = random(notes);
-            osc.freq(randomNote);
-            noiseEnv.play(noise);
-            oscEnv.play(osc);
-        }
-    } else {
-        // NEW: Trigger error effect if no links can be made
-        triggerError();
-    }
-}
+  if (unlinkedFaces.length > 0 && unlinkedTopics.length > 0) {
+    let randomFace = unlinkedFaces[floor(random(unlinkedFaces.length))];
+    let randomTopic = unlinkedTopics[floor(random(unlinkedTopics.length))];
 
-/**
- * Resets all links between faces and topics.
- */
-function resetLinks() {
-    for (let f of faces) {
-        f.linkedTopic = null;
-    }
-    for (let t of topics) {
-        t.isLinked = false;
-        t.linkedFace = null; // Remove the link back to the face
-    }
-}
+    // Create two-way link
+    randomFace.linkedTopic = randomTopic;
+    randomTopic.isLinked = true;
+    randomTopic.linkedFace = randomFace;
 
-// NEW: Re-added the missing removeLast function
-function removeLast() {
-    // Find the last unlinked face
-    for (let i = faces.length - 1; i >= 0; i--) {
-        if (!faces[i].linkedTopic) {
-            faces.splice(i, 1); // Remove it
-            break; // Only remove one
-        }
-    }
-    // Find the last unlinked topic
-    for (let i = topics.length - 1; i >= 0; i--) {
-        if (!topics[i].isLinked) {
-            topics.splice(i, 1); // Remove it
-            break; // Only remove one
-        }
-    }
-}
+    randomFace.triggerGlitch();
+    createParticleBurst(randomFace.pos.x, randomFace.pos.y);
 
-// NEW: Added the missing triggerError function
-function triggerError() {
-    shakeAmount = 10; // Set shake intensity
+    // Zap effect
+    zaps.push({ from: randomFace.pos.copy(), to: randomTopic.pos.copy(), life: 20 });
+
     if (soundInitialized) {
-        oscFailEnv.play(oscFail);
+      let randomNote = random(notes);
+      osc.freq(randomNote);
+      noiseEnv.play(noise);
+      oscEnv.play(osc);
     }
+  } else {
+    triggerError();
+  }
 }
 
-// NEW: Extracted sound initialization logic
+// Reset all links
+function resetLinks() {
+  for (let f of faces) f.linkedTopic = null;
+  for (let t of topics) { t.isLinked = false; t.linkedFace = null; }
+}
+
+// Remove the last unlinked face and last unlinked topic
+function removeLast() {
+  for (let i = faces.length - 1; i >= 0; i--) {
+    if (!faces[i].linkedTopic) { faces.splice(i, 1); break; }
+  }
+  for (let i = topics.length - 1; i >= 0; i--) {
+    if (!topics[i].isLinked) { topics.splice(i, 1); break; }
+  }
+}
+
+// Error / shake + sound
+function triggerError() {
+  shakeAmount = 10;
+  if (soundInitialized) oscFailEnv.play(oscFail);
+}
+
+// Initialize sound on first click
 function initSound() {
-    if (typeof userStartAudio !== 'function') {
-        console.error("p5.sound.js is not loaded yet. Please click again.");
-        return false;
-    }
-    userStartAudio();
+  if (typeof userStartAudio !== 'function') {
+    console.error("p5.sound.js not loaded yet.");
+    return false;
+  }
+  userStartAudio();
 
-    try {
-        // Link success sounds
-        noise = new p5.Noise('white');
-        noise.amp(0);
-        noise.start();
-        noiseEnv = new p5.Env();
-        noiseEnv.setADSR(0.01, 0.1, 0, 0.1);
+  try {
+    // Link success sounds
+    noise = new p5.Noise('white'); noise.amp(0); noise.start();
+    noiseEnv = new p5.Env(); noiseEnv.setADSR(0.01, 0.1, 0, 0.1);
 
-        osc = new p5.Oscillator('sine');
-        osc.amp(0);
-        osc.start();
-        oscEnv = new p5.Env();
-        oscEnv.setADSR(0.01, 0.2, 0.1, 0.3);
-        oscEnv.setRange(0.5, 0);
+    osc = new p5.Oscillator('sine'); osc.amp(0); osc.start();
+    oscEnv = new p5.Env(); oscEnv.setADSR(0.01, 0.2, 0.1, 0.3); oscEnv.setRange(0.5, 0);
 
-        // NEW: Link fail/error sound
-        oscFail = new p5.Oscillator('sawtooth');
-        oscFail.freq(60); // Low "buzz"
-        oscFail.amp(0);
-        oscFail.start();
-        oscFailEnv = new p5.Env();
-        oscFailEnv.setADSR(0.01, 0.05, 0, 0.05); // Very short "thud"
-        oscFailEnv.setRange(0.3, 0);
-        
-        soundInitialized = true;
-        return true;
-    } catch (e) {
-        console.error("Failed to initialize sound:", e);
-        return false;
-    }
+    // Fail/error sound
+    oscFail = new p5.Oscillator('sawtooth'); oscFail.freq(60); oscFail.amp(0); oscFail.start();
+    oscFailEnv = new p5.Env(); oscFailEnv.setADSR(0.01, 0.05, 0, 0.05); oscFailEnv.setRange(0.3, 0);
+
+    soundInitialized = true;
+    return true;
+  } catch (e) {
+    console.error("Failed to initialize sound:", e);
+    return false;
+  }
 }
-
 
 // --- Mouse Interaction ---
 function mousePressed() {
-    // Check if click is inside the canvas
-    if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
-        return;
-    }
+  // Init audio on first click
+  if (!soundInitialized) { initSound(); return; }
 
-    // Initialize p5.sound on the first user click
-    if (!soundInitialized) {
-        if(initSound()) {
-            return; // Don't try to drag on the same click that inits sound
-        } else {
-            return; // Sound failed to init
-        }
+  // Clicking a linked topic breaks the link
+  for (let i = topics.length - 1; i >= 0; i--) {
+    let t = topics[i];
+    if (t.isLinked && t.isHovered) {
+      if (t.linkedFace) t.linkedFace.linkedTopic = null;
+      t.isLinked = false;
+      t.linkedFace = null;
+      return;
     }
+  }
 
-    // NEW: Check for clicking a linked topic to break the link
-    // Loop backwards to catch the top-most topic
-    for (let i = topics.length - 1; i >= 0; i--) {
-        let t = topics[i];
-        if (t.isLinked && t.isHovered) {
-            if (t.linkedFace) {
-                t.linkedFace.linkedTopic = null; // Break link from face
-            }
-            t.isLinked = false;
-            t.linkedFace = null;
-            return; // Stop processing this click
-        }
-    }
-
-    // Check if mouse is over any object to start dragging
-    // Loop backwards so we grab the top-most object
-    if (!draggedObject) {
-        for (let i = topics.length - 1; i >= 0; i--) {
-            // NEW: Use isHovered property
-            if (topics[i].isHovered) {
-                draggedObject = topics[i];
-                break;
-            }
-        }
-    }
-    if (!draggedObject) {
-        for (let i = faces.length - 1; i >= 0; i--) {
-            // NEW: Use isHovered property
-            if (faces[i].isHovered) {
-                draggedObject = faces[i];
-                break;
-            }
-        }
-    }
-
-    // If we found an object, set its drag properties
-    if (draggedObject) {
-        draggedObject.isDragging = true;
-        draggedObject.dragOffset.set(draggedObject.pos.x - mouseX, draggedObject.pos.y - mouseY);
-        // NEW: Set cursor to "grabbing" immediately
-        canvas.style('cursor', 'grabbing');
-    }
+  // Start dragging (top-most first)
+  if (!draggedObject) {
+    for (let i = topics.length - 1; i >= 0; i--) if (topics[i].isHovered) { draggedObject = topics[i]; break; }
+  }
+  if (!draggedObject) {
+    for (let i = faces.length - 1; i >= 0; i--) if (faces[i].isHovered) { draggedObject = faces[i]; break; }
+  }
+  if (draggedObject) {
+    draggedObject.isDragging = true;
+    draggedObject.dragOffset.set(draggedObject.pos.x - mouseX, draggedObject.pos.y - mouseY);
+    canvas.style('cursor', 'grabbing');
+  }
 }
 
-// p5 function to handle dragging
 function mouseDragged() {
-    if (draggedObject) {
-        draggedObject.pos.set(mouseX + draggedObject.dragOffset.x, mouseY + draggedObject.dragOffset.y);
-    }
+  if (draggedObject) draggedObject.pos.set(mouseX + draggedObject.dragOffset.x, mouseY + draggedObject.dragOffset.y);
 }
 
-// p5 function to handle releasing a dragged object
 function mouseReleased() {
-    if (draggedObject) {
-        draggedObject.isDragging = false;
-        draggedObject = null;
-        // NEW: Reset cursor to 'grab' if still hovering
-        canvas.style('cursor', 'grab');
-    }
+  if (draggedObject) {
+    draggedObject.isDragging = false;
+    draggedObject = null;
+    canvas.style('cursor', 'grab');
+  }
 }
-
 
 // --- Retro Effects ---
-// NEW: Renamed from drawNoise to drawSpeckles
 function drawSpeckles() {
-    stroke(255, 15);
-    strokeWeight(1);
-    for (let i = 0; i < 300; i++) {
-        point(random(width), random(height));
-    }
+  stroke(255, 15);
+  strokeWeight(1);
+  for (let i = 0; i < 300; i++) point(random(width), random(height));
 }
 
-// NEW: Full-screen static effect
 function drawStatic() {
-    noStroke();
-    for(let i = 0; i < 10; i++) {
-        fill(random(0, 50), random(10, 30));
-        rect(random(width), random(height), random(width/2), random(height/10));
-    }
+  noStroke();
+  for (let i = 0; i < 10; i++) {
+    fill(random(0, 50), random(10, 30));
+    rect(random(width), random(height), random(width / 2), random(height / 10));
+  }
 }
 
-// NEW: Draw "zap" effect
 function drawZap(zap) {
-    push();
-    let alpha = map(zap.life, 0, 20, 0, 255);
-    stroke(255, 255, 0, alpha); // Bright yellow
-    strokeWeight(3 + zap.life * 0.2); // Thicker when new
-    
-    let mid = p5.Vector.lerp(zap.from, zap.to, 0.5);
-    mid.add(p5.Vector.random2D().mult(zap.life * 1.5)); // Add jaggedness
-    
-    noFill();
-    beginShape();
-    vertex(zap.from.x, zap.from.y);
-    vertex(mid.x, mid.y);
-    vertex(zap.to.x, zap.to.y);
-    endShape();
-    
-    // Inner white core
-    stroke(255, alpha);
-    strokeWeight(1 + zap.life * 0.1);
-    beginShape();
-    vertex(zap.from.x, zap.from.y);
-    vertex(mid.x, mid.y);
-    vertex(zap.to.x, zap.to.y);
-    endShape();
-    pop();
+  push();
+  let alpha = map(zap.life, 0, 20, 0, 255);
+  stroke(255, 255, 0, alpha);
+  strokeWeight(3 + zap.life * 0.2);
+
+  let mid = p5.Vector.lerp(zap.from, zap.to, 0.5);
+  mid.add(p5.Vector.random2D().mult(zap.life * 1.5));
+
+  noFill();
+  beginShape();
+  vertex(zap.from.x, zap.from.y);
+  vertex(mid.x, mid.y);
+  vertex(zap.to.x, zap.to.y);
+  endShape();
+
+  stroke(255, alpha);
+  strokeWeight(1 + zap.life * 0.1);
+  beginShape();
+  vertex(zap.from.x, zap.from.y);
+  vertex(mid.x, mid.y);
+  vertex(zap.to.x, zap.to.y);
+  endShape();
+  pop();
 }
 
-
-// --- Entity Classes ---
-
-/** * NEW: Base Class for interactable items
- * Handles position, dragging, and hover state.
- */
+// --- Base Classes ---
 class BaseItem {
-    constructor(x, y, r) {
-        this.pos = createVector(x, y);
-        this.radius = r; // For hover/click detection
-        
-        this.isDragging = false;
-        this.dragOffset = createVector(0, 0);
-        this.isHovered = false;
-    }
-
-    // NEW: Check for hover and update state
-    checkHover() {
-        // Don't check hover if being dragged
-        if (this.isDragging) {
-            this.isHovered = false; // Ensure it's false
-            return false;
-        }
-        let d = dist(mouseX, mouseY, this.pos.x, this.pos.y);
-        this.isHovered = d < this.radius;
-        return this.isHovered;
-    }
-
-    // Update shell (to be overridden)
-    update() {}
+  constructor(x, y, r) {
+    this.pos = createVector(x, y);
+    this.radius = r;
+    this.isDragging = false;
+    this.dragOffset = createVector(0, 0);
+    this.isHovered = false;
+  }
+  checkHover() {
+    if (this.isDragging) { this.isHovered = false; return false; }
+    let d = dist(mouseX, mouseY, this.pos.x, this.pos.y);
+    this.isHovered = d < this.radius;
+    return this.isHovered;
+  }
+  update() {}
 }
 
-
-/** * Face Class (Producer)
- * Extends BaseItem
- */
+// Face (Producer)
 class Face extends BaseItem {
-    constructor(img) {
-        // MODIFIED: Call new BaseItem constructor
-        super(random(FACE_SIZE / 2, width - FACE_SIZE / 2), random(FACE_SIZE / 2, height / 2), FACE_SIZE / 2);
-        this.img = img;
-        this.img.filter(GRAY); // Make image grayscale
-        this.linkedTopic = null;
-        
-        // NEW: Glitch effect property
-        this.glitchAmount = 0; 
+  constructor(img) {
+    super(random(FACE_SIZE / 2, width - FACE_SIZE / 2), random(FACE_SIZE / 2, height / 2), FACE_SIZE / 2);
+    this.img = img;
+    this.img.filter(GRAY);
+    this.linkedTopic = null;
+    this.glitchAmount = 0;
+  }
+  triggerGlitch() { this.glitchAmount = 1.0; }
+  update() {
+    if (this.glitchAmount > 0) this.glitchAmount -= 0.05;
+    else this.glitchAmount = 0;
+  }
+  display() {
+    push();
+    translate(this.pos.x, this.pos.y);
+    imageMode(CENTER);
+
+    if (this.isHovered && !this.isDragging) scale(1.05);
+
+    if (this.glitchAmount > 0) {
+      let gX = (random(-5, 5) * this.glitchAmount);
+      let gY = (random(-5, 5) * this.glitchAmount);
+      drawingContext.globalCompositeOperation = 'lighter';
+      tint(255, 0, 0, 150 * this.glitchAmount); image(this.img, gX, gY, FACE_SIZE, FACE_SIZE);
+      tint(0, 255, 0, 150 * this.glitchAmount); image(this.img, -gX, -gY, FACE_SIZE, FACE_SIZE);
+      tint(0, 0, 255, 150 * this.glitchAmount); image(this.img, gX / 2, gY / 2, FACE_SIZE, FACE_SIZE);
+      drawingContext.globalCompositeOperation = 'source-over';
+      noTint();
     }
 
-    // NEW: Method to trigger the glitch
-    triggerGlitch() {
-        this.glitchAmount = 1.0; // Start glitch at full intensity
-    }
+    if (this.glitchAmount > 0) tint(255, 255 * (1 - this.glitchAmount * 0.5));
+    image(this.img, 0, 0, FACE_SIZE, FACE_SIZE);
+    noTint();
 
-    update() {
-        // NEW: Decay the glitch effect over time
-        if (this.glitchAmount > 0) {
-            this.glitchAmount -= 0.05; // Lower value = longer glitch
-        } else {
-            this.glitchAmount = 0;
-        }
-    }
-
-    display() {
-        push();
-        translate(this.pos.x, this.pos.y);
-        imageMode(CENTER);
-
-        // NEW: Hover scale effect
-        if (this.isHovered && !this.isDragging) {
-            scale(1.05);
-        }
-
-        // NEW: Glitch Effect Logic
-        if (this.glitchAmount > 0) {
-            // Draw offset color channels for a "VHS" glitch
-            let gX = (random(-5, 5) * this.glitchAmount);
-            let gY = (random(-5, 5) * this.glitchAmount);
-            
-            // Use 'lighter' to blend the colors
-            drawingContext.globalCompositeOperation = 'lighter';
-            
-            // 1. Red Channel (offset)
-            tint(255, 0, 0, 150 * this.glitchAmount);
-            image(this.img, gX, gY, FACE_SIZE, FACE_SIZE);
-            
-            // 2. Green Channel (offset)
-            tint(0, 255, 0, 150 * this.glitchAmount);
-            image(this.img, -gX, -gY, FACE_SIZE, FACE_SIZE);
-            
-            // 3. Blue Channel (offset)
-            tint(0, 0, 255, 150 * this.glitchAmount);
-            image(this.img, gX / 2, gY / 2, FACE_SIZE, FACE_SIZE);
-            
-            // Reset blend mode and tint
-            drawingContext.globalCompositeOperation = 'source-over';
-            noTint();
-        }
-        
-        // --- Base Image ---
-        // Draw the normal image, slightly faded if glitching
-        if(this.glitchAmount > 0) {
-           tint(255, 255 * (1.0 - this.glitchAmount * 0.5)); 
-        }
-        image(this.img, 0, 0, FACE_SIZE, FACE_SIZE);
-        noTint();
-        
-        // Rounded square border
-        noFill();
-        // NEW: Set stroke color based on hover
-        if (this.isHovered) {
-            stroke(0, 255, 0); // Green
-            strokeWeight(3);
-        } else {
-            stroke(255); // White
-            strokeWeight(2);
-        }
-        rect(0, 0, FACE_SIZE + 2, FACE_SIZE + 2, 8); // 8px border radius
-        pop();
-    }
+    noFill();
+    if (this.isHovered) { stroke(0, 255, 0); strokeWeight(3); }
+    else { stroke(255); strokeWeight(2); }
+    rect(0, 0, FACE_SIZE + 2, FACE_SIZE + 2, 8);
+    pop();
+  }
 }
 
-/** * Topic Class (Vibe/Genre)
- * Extends BaseItem
- */
+// Topic (Vibe/Genre)
 class Topic extends BaseItem {
-    constructor(text) {
-        // ... existing constructor code ...
-        let tempWidth = textWidth(text) + 30; // 30 for padding
-        // MODIFIED: Call new BaseItem constructor
-        super(random(tempWidth / 2, width - tempWidth / 2), random(height / 2, height - TOPIC_HEIGHT / 2), Math.max(tempWidth / 2, TOPIC_HEIGHT / 2)); 
-        
-        this.text = text;
-        this.width = tempWidth;
-        this.height = TOPIC_HEIGHT;
-        this.isLinked = false;
-        this.linkedFace = null; 
-        
-        // NEW: Properties for pulsing glow
-        this.pulse = random(1.0); // Start at random pulse point
-        this.pulseDir = 1;
+  constructor(text) {
+    let tempWidth = textWidth(text) + 30;
+    super(random(tempWidth / 2, width - tempWidth / 2), random(height / 2, height - TOPIC_HEIGHT / 2), Math.max(tempWidth / 2, TOPIC_HEIGHT / 2));
+    this.text = text;
+    this.width = tempWidth;
+    this.height = TOPIC_HEIGHT;
+    this.isLinked = false;
+    this.linkedFace = null;
+    this.pulse = random(1.0);
+    this.pulseDir = 1;
+  }
+  update() {
+    if (this.isLinked && this.linkedFace) {
+      let targetY = this.linkedFace.pos.y - this.linkedFace.radius - (this.height / 2) - 10;
+      if (targetY < this.height / 2) targetY = this.height / 2;
+      this.pos.x = this.linkedFace.pos.x;
+      this.pos.y = targetY;
+
+      this.pulse += this.pulseDir * 0.05;
+      if (this.pulse > 1.0 || this.pulse < 0) { this.pulseDir *= -1; this.pulse = constrain(this.pulse, 0, 1.0); }
     }
+  }
+  display() {
+    push();
+    translate(this.pos.x, this.pos.y);
+    if (this.isHovered && !this.isDragging) scale(1.05);
 
-    update() {
-        if (this.isLinked && this.linkedFace) {
-            // If linked, lock position above the face
-            let targetY = this.linkedFace.pos.y - this.linkedFace.radius - (this.height / 2) - 10; // 10px padding
-            
-            // Clamp to top edge if face bounces too high
-            if (targetY < this.height / 2) {
-                targetY = this.height / 2;
-            }
+    if (this.isHovered) { stroke(0, 255, 0); strokeWeight(3); }
+    else { stroke(255); strokeWeight(1); }
 
-            this.pos.x = this.linkedFace.pos.x;
-            this.pos.y = targetY;
+    if (this.isLinked) {
+      let easedPulse = 0.5 * (1.0 - cos(this.pulse * PI));
+      let glowAlpha = 50 + (easedPulse * 100);
+      noStroke();
+      fill(255, glowAlpha);
+      rect(0, 0, this.width + 5, this.height + 5, 8);
 
-            // NEW: Update pulsing animation
-            this.pulse += this.pulseDir * 0.05;
-            if (this.pulse > 1.0 || this.pulse < 0) {
-                this.pulseDir *= -1; // Reverse direction
-                this.pulse = constrain(this.pulse, 0, 1.0);
-            }
+      if (this.isHovered) { stroke(0, 255, 0); strokeWeight(3); }
+      else { stroke(255); strokeWeight(1); }
 
-        } 
+      fill(255);
+      rect(0, 0, this.width, this.height, 5);
+      noStroke();
+      fill(0);
+      text(this.text, 0, 0);
+    } else {
+      fill(0);
+      rect(0, 0, this.width, this.height, 5);
+      noStroke();
+      fill(255);
+      text(this.text, 0, 0);
     }
-
-    display() {
-        push();
-        translate(this.pos.x, this.pos.y);
-        
-        // NEW: Hover scale effect
-        if (this.isHovered && !this.isDragging) {
-            scale(1.05);
-        }
-
-        // NEW: Set stroke color based on hover
-        if (this.isHovered) {
-            stroke(0, 255, 0); // Green
-            strokeWeight(3);
-        } else {
-            stroke(255); // White
-            strokeWeight(1);
-        }
-        
-        // Linked topics get a slightly different style
-        if (this.isLinked) {
-            // NEW: Pulsing glow effect
-            // lerpEaseInOut: 0.5 * (1.0 - cos(this.pulse * PI))
-            let easedPulse = 0.5 * (1.0 - cos(this.pulse * PI));
-            let glowAlpha = 50 + (easedPulse * 100); // 50 to 150
-            noStroke();
-            fill(255, glowAlpha);
-            // Draw a soft "glow" rectangle behind the main one
-            rect(0, 0, this.width + 5, this.height + 5, 8); 
-            
-            // Redraw stroke for main box
-            if (this.isHovered) {
-                stroke(0, 255, 0);
-                strokeWeight(3);
-            } else {
-                stroke(255);
-                strokeWeight(1);
-            }
-            
-            fill(255); // White background
-            rect(0, 0, this.width, this.height, 5);
-            noStroke();
-            fill(0); // Black text
-            text(this.text, 0, 0);
-        } else {
-            fill(0); // Black background
-            rect(0, 0, this.width, this.height, 5);
-            noStroke();
-            fill(255); // White text
-            text(this.text, 0, 0);
-        }
-        pop();
-    }
+    pop();
+  }
 }
 
-/** * Particle Class (for link effect)
- */
+// Particle for link effect
 class Particle {
-    constructor(x, y) {
-        this.pos = createVector(x, y);
-        // NEW: More explosive velocity
-        this.vel = p5.Vector.random2D().mult(random(2, 6)); 
-        // NEW: Varied lifespan and decay
-        this.lifespan = random(150, 255);
-        this.decay = random(3, 6);
-    }
-    
-    update() {
-        this.pos.add(this.vel);
-        this.vel.mult(0.98); // Slow down
-        this.lifespan -= this.decay; // Fade out at varied speed
-    }
-    
-    isDead() {
-        return this.lifespan < 0;
-    }
-    
-    // NEW: "Cooler" display as flickering bits
-    display() {
-        // Flicker effect
-        let flicker = random(100, 255);
-        noStroke();
-        fill(flicker, this.lifespan);
-        // Draw as small rects (like digital bits)
-        rect(this.pos.x, this.pos.y, 4, 4); // Already set to CENTER
-    }
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.vel = p5.Vector.random2D().mult(random(2, 6));
+    this.lifespan = random(150, 255);
+    this.decay = random(3, 6);
+  }
+  update() { this.pos.add(this.vel); this.vel.mult(0.98); this.lifespan -= this.decay; }
+  isDead() { return this.lifespan < 0; }
+  display() {
+    let flicker = random(100, 255);
+    noStroke();
+    fill(flicker, this.lifespan);
+    rect(this.pos.x, this.pos.y, 4, 4);
+  }
 }
