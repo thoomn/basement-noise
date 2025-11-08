@@ -1,299 +1,175 @@
-<script>
-/* ======== p5 + Wheel State ======== */
-let pg;                     // offscreen buffer for crisp wheel rendering
-let wheelSize, cx, cy;      // responsive sizing
-let angle = 0;              // current rotation
-let spinVel = 0;            // angular velocity
-let spinning = false;
-let slices = [];            // {name, file, sound:p5.SoundFile|null}
-let sliceAngle = 0;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sample Roulette • Basement Noise</title>
 
-let audioReady = false;
-let confetti = [];
-let winIndex = -1;
-let lastPlayed = null;
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Courier+Prime&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
 
-/* DOM refs */
-const fileInput = document.getElementById('file-input') || null; // if you used a hidden input
-const wrap = document.getElementById('roulette-wrap');
-
-/* ========== Audio unlock ========== */
-function ensureAudio() {
-  if (audioReady) return true;
-  if (typeof userStartAudio === 'function') {
-    userStartAudio();
-    audioReady = true;
-    return true;
-  }
-  return false;
-}
-
-/* ========== Upload handling ========== */
-function addSamplesFromFiles(files) {
-  for (const f of files) {
-    const url = URL.createObjectURL(f);
-    loadSound(url, snd => {
-      slices.push({ name: f.name, file: url, sound: snd });
-      rebuildWheel();
-    }, e => console.warn('loadSound error', e));
-  }
-}
-
-if (fileInput) {
-  fileInput.addEventListener('change', e => {
-    if (!e.target.files.length) return;
-    ensureAudio();
-    addSamplesFromFiles(e.target.files);
-    e.target.value = '';
-  });
-}
-
-/* ========== p5 core ========== */
-function setup() {
-  // canvas sized to wrapper width (square)
-  const sz = Math.min(820, document.getElementById('roulette-wrap').clientWidth);
-  const c = createCanvas(sz, sz);
-  c.parent('roulette-wrap');
-  wheelSize = min(width, height);
-  cx = width / 2; cy = height / 2;
-
-  pixelDensity(1);
-  textFont('Courier New');
-  angleMode(RADIANS);
-
-  // offscreen buffer for the wheel face
-  pg = createGraphics(wheelSize, wheelSize);
-  pg.angleMode(RADIANS);
-  pg.textAlign(CENTER, CENTER);
-  pg.textFont('Courier New');
-
-  // click anywhere to unlock audio
-  canvas.mousePressed(() => ensureAudio());
-}
-
-function windowResized() {
-  const sz = Math.min(820, document.getElementById('roulette-wrap').clientWidth);
-  resizeCanvas(sz, sz);
-  wheelSize = min(width, height);
-  cx = width / 2; cy = height / 2;
-  pg = createGraphics(wheelSize, wheelSize);
-  pg.angleMode(RADIANS);
-  pg.textAlign(CENTER, CENTER);
-  pg.textFont('Courier New');
-  redrawWheel();
-}
-
-function draw() {
-  clear(); // transparent, so site background shows through
-
-  // spin physics
-  if (spinning) {
-    angle += spinVel;
-    spinVel *= 0.985;                  // damping
-    if (abs(spinVel) < 0.0025) {       // snap to nearest slice
-      spinVel = 0;
-      spinning = false;
-      snapToSlice();
-      celebrate(winIndex);
-      playWinner(winIndex);
+  <style>
+    :root{
+      --bg:#000; --panel:#0f0f10; --ink:#f3f3f3; --muted:#bcbcbc; --frame:#27272a;
+      --maxw:1100px;
     }
-  }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Courier Prime",monospace}
+    a{color:inherit;text-decoration:none}
 
-  // draw wheel
-  push();
-  translate(cx, cy);
-  rotate(angle);
-  imageMode(CENTER);
-  image(pg, 0, 0);
-  pop();
+    /* Background layers */
+    #bgCanvas{ position:fixed; inset:0; z-index:0; }
+    .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:0;
+      background: repeating-linear-gradient(to bottom,
+        rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px,
+        transparent 2px, transparent 3px); }
+    .vignette{ position:fixed; inset:0; z-index:0; pointer-events:none;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%); }
 
-  // draw confetti
-  for (let i = confetti.length - 1; i >= 0; i--) {
-    const p = confetti[i];
-    p.vy += 0.15;
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life -= 1;
-    noStroke();
-    fill(255, p.life * 2);
-    rect(p.x, p.y, 4, 4);
-    if (p.life <= 0) confetti.splice(i, 1);
-  }
-}
+    /* Header */
+    .site-header{
+      position:sticky; top:0; z-index:20;
+      background:rgba(0,0,0,.85);
+      border-bottom:1px solid #191919;
+      backdrop-filter: blur(6px);
+    }
+    .bar{ max-width:var(--maxw); margin:0 auto; padding:10px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .brand{display:flex; align-items:center; gap:12px;}
+    .brand img{height:36px; width:auto; filter: drop-shadow(0 0 10px rgba(255,255,255,.12))}
+    .brand .name{
+      font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1rem;
+      animation:glitch 2.2s linear infinite;
+    }
+    @keyframes glitch{
+      0%,100%{ text-shadow:0 0 12px #fff, 2px -2px 0 #f00, -2px 2px 0 #0ff }
+      50%    { text-shadow:0 0 12px #fff, -2px 2px 0 #f00, 2px -2px 0 #0ff }
+    }
+    nav a{margin-left:10px;padding:6px 10px;border:1px solid #2e2e2e;border-radius:8px;}
+    nav a:hover{border-color:#fff;background:#fff;color:#000}
 
-/* ========== Wheel building ========== */
-function rebuildWheel() {
-  sliceAngle = TWO_PI / max(1, slices.length || 1);
-  redrawWheel();
-}
+    /* Title */
+    .hero{ max-width:var(--maxw); margin:28px auto 8px; padding:0 16px; text-align:center; position:relative; z-index:5; }
+    .title{ font-family:Orbitron, sans-serif; letter-spacing:3px; font-size:2rem; margin:4px 0 6px; text-shadow:0 0 20px rgba(255,255,255,.08); }
+    .subtitle{ color:var(--muted); margin:0; }
 
-function redrawWheel() {
-  pg.clear();
-  const r = wheelSize * 0.42;
-  const rLabel = r * 0.70;
+    /* Panel + wheel */
+    .wrap{ max-width:var(--maxw); margin:18px auto 40px; padding:0 16px; position:relative; z-index:5; }
+    .panel{
+      background:rgba(15,15,16,.4); border:1px solid var(--frame); border-radius:16px; padding:18px;
+    }
 
-  // outer ring
-  pg.noFill();
-  pg.stroke(255);
-  pg.strokeWeight(2);
-  pg.circle(wheelSize / 2, wheelSize / 2, r * 2);
+    .controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:4px 0 16px;}
+    .ui{background:#111;color:#fff;border:1px solid #fff;border-radius:8px;
+      padding:10px 14px;font:16px/1 "Courier Prime",monospace;cursor:pointer;transition:.15s;}
+    .ui:hover{background:#fff;color:#000;}
 
-  if (!slices.length) return;
+    #roulette-wrap{position:relative;width:100%;max-width:820px;margin:0 auto;}
+    #roulette{display:block;width:100%;height:auto;}
+    .pointer{position:absolute;right:-14px;top:50%;transform:translateY(-50%);
+      width:0;height:0;border-left:14px solid #fff;
+      border-top:10px solid transparent;border-bottom:10px solid transparent;
+      filter:drop-shadow(0 0 6px rgba(255,255,255,.5));}
+    .win-ring{position:absolute;inset:0;pointer-events:none;border-radius:50%;
+      box-shadow:0 0 0 0 rgba(255,255,255,.0);
+      animation:winPulse .8s ease-out forwards;}
+    @keyframes winPulse{
+      0%{box-shadow:0 0 0 0 rgba(255,255,255,.8);}
+      100%{box-shadow:0 0 60px 28px rgba(255,255,255,0);}
+    }
 
-  for (let i = 0; i < slices.length; i++) {
-    const a0 = i * sliceAngle - HALF_PI;       // start from up (−90°) so pointer on right feels natural
-    const a1 = a0 + sliceAngle;
+    .note{color:#9f9f9f;font-size:.9rem;text-align:center;margin-top:10px}
+    footer{color:#8a8a8a;font-size:.88rem;padding:26px 16px 40px;text-align:center;position:relative;z-index:5;}
+  </style>
+</head>
+<body>
 
-    // slice fill
-    pg.noStroke();
-    pg.fill(i % 2 ? 30 : 40);
-    pg.arc(wheelSize / 2, wheelSize / 2, r * 2, r * 2, a0, a1, PIE);
+  <div class="site-header">
+    <div class="bar">
+      <a class="brand" href="/basement-noise/">
+        <img src="/basement-noise/basement_noise_logo_design.png" alt="Basement Noise">
+        <span class="name">Basement Noise</span>
+      </a>
+      <nav>
+        <a href="/basement-noise/">Home</a>
+        <a href="/basement-noise/tools/wheel-decide/">Wheel Decide</a>
+        <a href="/basement-noise/tools/producer-linker/">Producer Linker</a>
+      </nav>
+    </div>
+  </div>
 
-    // slice divider
-    pg.stroke(90);
-    pg.strokeWeight(1);
-    pg.line(
-      wheelSize / 2 + cos(a0) * r,
-      wheelSize / 2 + sin(a0) * r,
-      wheelSize / 2,
-      wheelSize / 2
-    );
+  <div class="hero">
+    <h1 class="title">Sample Roulette</h1>
+    <p class="subtitle">Upload samples, spin the wheel, and let the winner play—with a little retro celebration.</p>
+  </div>
 
-    // label
-    pg.push();
-    pg.translate(wheelSize / 2, wheelSize / 2);
-    const mid = a0 + sliceAngle / 2;
-    pg.rotate(mid);
-    pg.noStroke();
-    pg.fill(200);
-    pg.textSize(12);
-    const label = truncLabel(slices[i].name);
-    pg.text(label, 0, -rLabel);
-    pg.pop();
-  }
+  <section class="wrap">
+    <div class="panel">
+      <div class="controls">
+        <button class="ui" onclick="SR_upload()">Upload Samples</button>
+        <button class="ui" onclick="SR_spin()">Spin</button>
+        <button class="ui" onclick="SR_clear()">Clear</button>
+      </div>
 
-  // hub
-  pg.noStroke();
-  pg.fill(0);
-  pg.circle(wheelSize / 2, wheelSize / 2, 40);
-  pg.stroke(255);
-  pg.noFill();
-  pg.circle(wheelSize / 2, wheelSize / 2, 40);
-}
+      <div id="roulette-wrap">
+        <div class="pointer"></div>
+        <canvas id="roulette"></canvas>
+      </div>
+      <p class="note">Tip: first click unlocks audio • drag to spin when idle • labels are file names you upload.</p>
+    </div>
+  </section>
 
-function truncLabel(s) {
-  const max = 26;
-  if (s.length <= max) return s;
-  const dot = s.lastIndexOf('.');
-  const base = dot > 0 ? s.slice(0, dot) : s;
-  return base.length > max ? base.slice(0, max - 1) + '…' : base;
-}
+  <footer>© Basement Noise • Built by friends in the lab 🧠🎚</footer>
 
-/* ========== Spin control ========== */
-function spin() {
-  if (!slices.length || spinning) return;
-  ensureAudio();
+  <canvas id="bgCanvas"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
 
-  // random initial velocity (positive = CW)
-  spinVel = random(0.25, 0.35);
-  spinning = true;
+  <!-- ========== Background animation ========== -->
+  <script>
+    const c=document.getElementById('bgCanvas');
+    const ctx=c.getContext('2d',{alpha:false});
+    let w,h,t=0;
+    function resize(){w=c.width=innerWidth;h=c.height=innerHeight;}
+    addEventListener('resize',resize);resize();
+    function drawGrain(){
+      const img=ctx.getImageData(0,0,w,h);
+      const d=img.data;
+      for(let i=0;i<d.length;i+=4){
+        const n=8+(Math.random()*12)|0;
+        d[i]=d[i+1]=d[i+2]=n;
+      }
+      ctx.putImageData(img,0,0);
+    }
+    function drawStairs(){
+      ctx.save();ctx.globalAlpha=.05;ctx.strokeStyle='#fff';ctx.lineWidth=2;
+      const steps=6,bx=w*0.12+Math.sin(t*.0008)*w*.02,by=h*0.25+Math.cos(t*.0006)*h*.02;
+      for(let s=0;s<steps;s++){ctx.strokeRect(bx+s*26,by+s*18,120,34);}
+      const rx=w*0.68+Math.cos(t*.0007)*w*.02,ry=h*0.62+Math.sin(t*.0005)*h*.02;
+      for(let s=0;s<steps;s++){ctx.strokeRect(rx-s*24,ry-s*16,140,36);}
+      ctx.restore();
+    }
+    function tick(now){
+      t=now;ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);
+      drawGrain();drawStairs();requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  </script>
 
-  // stop anything currently playing
-  if (lastPlayed && lastPlayed.isPlaying()) lastPlayed.stop();
-}
+  <!-- ========== Wheel Script (p5.js) ========== -->
+  <script>
+  let pg,wheelSize,cx,cy,angle=0,spinVel=0,spinning=false;
+  let slices=[],sliceAngle=0,audioReady=false,confetti=[],winIndex=-1,lastPlayed=null;
+  const wrap=document.getElementById('roulette-wrap');
 
-function snapToSlice() {
-  // normalize current facing angle to [0..TWO_PI)
-  // Pointer is on the RIGHT, so “winning” slice is at angle 0 (pointing +X)
-  const facing = ((-angle) % TWO_PI + TWO_PI) % TWO_PI; // convert rotation to wheel space
-  const idx = floor(((facing + HALF_PI) % TWO_PI) / sliceAngle); // compensate our slice start at -HALF_PI
-  winIndex = constrain(idx, 0, slices.length - 1);
-
-  // rotate to center the slice exactly at pointer (right side = 0 rad)
-  const sliceMid = winIndex * sliceAngle + sliceAngle / 2 - HALF_PI;
-  angle = -sliceMid; // so that sliceMid ends at +X after rotation
-
-  // brief highlight of winner slice by redrawing with bright edge
-  drawWinnerEdge(winIndex);
-}
-
-function drawWinnerEdge(i) {
-  const r = wheelSize * 0.42;
-  const a0 = i * sliceAngle - HALF_PI;
-  const a1 = a0 + sliceAngle;
-
-  pg.push();
-  pg.noFill();
-  pg.stroke(255);
-  pg.strokeWeight(3);
-  pg.arc(wheelSize / 2, wheelSize / 2, r * 2 + 4, r * 2 + 4, a0, a1);
-  pg.pop();
-}
-
-/* ========== Celebration + audio ========== */
-function celebrate(i) {
-  // pulse ring overlay
-  const ring = document.createElement('div');
-  ring.className = 'win-ring';
-  wrap.appendChild(ring);
-  setTimeout(() => wrap.removeChild(ring), 820);
-
-  // confetti burst
-  const n = 70;
-  for (let k = 0; k < n; k++) {
-    confetti.push({
-      x: cx + (k % 2 ? 12 : -12),
-      y: cy,
-      vx: random(-3, 3),
-      vy: random(-6, -2),
-      life: random(40, 70)
-    });
-  }
-}
-
-function playWinner(i) {
-  if (i < 0 || i >= slices.length) return;
-  const snd = slices[i].sound;
-  if (!snd) return;
-  if (lastPlayed && lastPlayed.isPlaying()) lastPlayed.stop();
-  snd.stop();  // ensure we start from 0
-  snd.setVolume(0.9);
-  snd.play();
-  lastPlayed = snd;
-}
-
-/* ========== Controls (wire these to your buttons) ========== */
-window.SR_upload = () => {
-  ensureAudio();
-  const el = document.createElement('input');
-  el.type = 'file'; el.accept = 'audio/*'; el.multiple = true;
-  el.onchange = e => addSamplesFromFiles(e.target.files);
-  el.click();
-};
-
-window.SR_spin = spin;
-
-window.SR_clear = () => {
-  if (lastPlayed && lastPlayed.isPlaying()) lastPlayed.stop();
-  slices.forEach(s => s.sound && s.sound.stop());
-  slices = [];
-  winIndex = -1;
-  angle = 0; spinVel = 0; spinning = false;
-  rebuildWheel();
-};
-
-/* Optional: spin by dragging when idle */
-let prevX = null;
-function mousePressed() {
-  prevX = mouseX;
-}
-function mouseDragged() {
-  if (spinning || !prevX) return;
-  const dx = mouseX - prevX;
-  angle += dx * 0.005;
-  prevX = mouseX;
-}
-function mouseReleased() {
-  prevX = null;
-}
-</script>
+  function ensureAudio(){if(audioReady)return true;if(typeof userStartAudio==='function'){userStartAudio();audioReady=true;}return true;}
+  function addSamplesFromFiles(files){for(const f of files){const url=URL.createObjectURL(f);loadSound(url,snd=>{slices.push({name:f.name,sound:snd});rebuildWheel();});}}
+  function setup(){const sz=Math.min(820,document.getElementById('roulette-wrap').clientWidth);const c=createCanvas(sz,sz);c.parent('roulette-wrap');wheelSize=min(width,height);cx=width/2;cy=height/2;pg=createGraphics(wheelSize,wheelSize);pg.textAlign(CENTER,CENTER);pg.textFont('Courier New');canvas.mousePressed(()=>ensureAudio());}
+  function windowResized(){const sz=Math.min(820,document.getElementById('roulette-wrap').clientWidth);resizeCanvas(sz,sz);wheelSize=min(width,height);cx=width/2;cy=height/2;pg=createGraphics(wheelSize,wheelSize);pg.textAlign(CENTER,CENTER);pg.textFont('Courier New');redrawWheel();}
+  function draw(){clear();if(spinning){angle+=spinVel;spinVel*=0.985;if(abs(spinVel)<0.0025){spinVel=0;spinning=false;snapToSlice();celebrate(winIndex);playWinner(winIndex);}}push();translate(cx,cy);rotate(angle);imageMode(CENTER);image(pg,0,0);pop();for(let i=confetti.length-1;i>=0;i--){const p=confetti[i];p.vy+=0.15;p.x+=p.vx;p.y+=p.vy;p.life-=1;noStroke();fill(255,p.life*2);rect(p.x,p.y,4,4);if(p.life<=0)confetti.splice(i,1);}}
+  function rebuildWheel(){sliceAngle=TWO_PI/max(1,slices.length||1);redrawWheel();}
+  function redrawWheel(){pg.clear();const r=wheelSize*0.42,rLabel=r*0.7;pg.stroke(255);pg.noFill();pg.strokeWeight(2);pg.circle(wheelSize/2,wheelSize/2,r*2);if(!slices.length)return;for(let i=0;i<slices.length;i++){const a0=i*sliceAngle-HALF_PI,a1=a0+sliceAngle;pg.noStroke();pg.fill(i%2?30:40);pg.arc(wheelSize/2,wheelSize/2,r*2,r*2,a0,a1,PIE);pg.stroke(90);pg.line(wheelSize/2+cos(a0)*r,wheelSize/2+sin(a0)*r,wheelSize/2,wheelSize/2);pg.push();pg.translate(wheelSize/2,wheelSize/2);pg.rotate(a0+sliceAngle/2);pg.noStroke();pg.fill(200);pg.textSize(12);pg.text(truncLabel(slices[i].name),0,-rLabel);pg.pop();}pg.noStroke();pg.fill(0);pg.circle(wheelSize/2,wheelSize/2,40);pg.stroke(255);pg.noFill();pg.circle(wheelSize/2,wheelSize/2,40);}
+  function truncLabel(s){const max=26;if(s.length<=max)return s;const dot=s.lastIndexOf('.');const base=dot>0?s.slice(0,dot):s;return base.length>max?base.slice(0,max-1)+'…':base;}
+  function spin(){if(!slices.length||spinning)return;ensureAudio();spinVel=random(0.25,0.35);spinning=true;if(lastPlayed&&lastPlayed.isPlaying())lastPlayed.stop();}
+  function snapToSlice(){const facing=(( -angle)%TWO_PI+TWO_PI)%TWO_PI;const idx=floor(((facing+HALF_PI)%TWO_PI)/sliceAngle);winIndex=constrain(idx,0,slices.length
