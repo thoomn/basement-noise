@@ -1,823 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basement Noise Producer Type Beat Linker</title>
-    <!-- p5.js (core) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
-    <!-- p5.sound addon (same CDN + version) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Basement Noise • Producer Linker</title>
 
-    
-    <style>
-        body {
-            background-color: #000;
-            color: #fff;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
+  <!-- p5.js (same CDN/version) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
 
-        #logo-title {
-            font-size: 2.5rem;
-            font-weight: bold;
-            letter-spacing: 4px;
-            text-shadow: 0 0 10px #fff;
-            margin: 20px 0 10px 0;
-            padding: 0;
-            /* NEW: Animation for glitch effect */
-            animation: glitch 1.5s linear infinite;
-        }
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Courier+Prime&display=swap" rel="stylesheet">
 
-        /* NEW: Keyframes for title glitch */
-        @keyframes glitch {
-            0%, 100% {
-                text-shadow: 0 0 10px #fff, -2px 2px 0 #00f, 2px -2px 0 #f00;
-                transform: translate(0, 0);
-            }
-            25% {
-                text-shadow: 0 0 10px #fff, 2px 2px 0 #00f, -2px -2px 0 #f00;
-                transform: translate(-1px, 1px);
-            }
-            50% {
-                text-shadow: 0 0 10px #fff, -2px -2px 0 #00f, 2px 2px 0 #f00;
-                transform: translate(1px, -1px);
-            }
-            75% {
-                text-shadow: 0 0 10px #fff, 2px -2px 0 #00f, -2px 2px 0 #f00;
-                transform: translate(1px, 1px);
-            }
-        }
+  <style>
+    :root{
+      --bg:#000; --panel:#101010; --ink:#f3f3f3; --muted:#bcbcbc; --frame:#2d2d2d; --glow:rgba(255,255,255,.12);
+      --maxw: 1024px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Courier Prime",monospace}
 
-        h1 {
-            font-weight: normal;
-            font-size: 1.2rem;
-            border: none;
-            padding-bottom: 5px;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
+    /* ===== Header ===== */
+    .site-header{
+      position: sticky; top:0; z-index: 10;
+      background: rgba(0,0,0,.85);
+      border-bottom: 1px solid #191919;
+      backdrop-filter: blur(6px);
+    }
+    .bar{
+      max-width: var(--maxw); margin:0 auto; padding:10px 16px;
+      display:flex; align-items:center; gap:16px; justify-content:space-between;
+    }
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink)}
+    .brand img{height:36px; width:auto; filter: drop-shadow(0 0 10px var(--glow))}
+    .brand span{font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1rem}
 
-        /* NEW: Added a more intense glow to the canvas */
-        #canvas-container {
-            border: 2px solid #fff;
-            /* Brighter, double-layered glow */
-            box-shadow: 0 0 15px #fff, 0 0 25px #fff; 
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-            cursor: default;
-        }
+    nav a{color:var(--ink); text-decoration:none; padding:6px 10px; border:1px solid #333; border-radius:8px; margin-left:8px}
+    nav a:hover{border-color:#fff; background:#fff; color:#000}
 
-        #ui-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            padding: 0 20px;
-        }
+    /* ===== Page Title / Tagline ===== */
+    header.page{
+      text-align:center; margin:28px 16px 14px;
+    }
+    .logo-title{
+      font-family:Orbitron, sans-serif; font-size:2rem; letter-spacing:4px; margin:6px 0 4px;
+      text-shadow:0 0 20px rgba(255,255,255,.08);
+      animation: titleglitch 2s linear infinite;
+    }
+    @keyframes titleglitch{
+      0%,100%{text-shadow:0 0 10px #fff, 2px -2px 0 #f00, -2px 2px 0 #0ff}
+      50%{text-shadow:0 0 10px #fff, -2px 2px 0 #f00, 2px -2px 0 #0ff}
+    }
+    .subtitle{color:var(--muted); margin:0}
 
-        .ui-button,
-        input[type="text"] {
-            background-color: #111;
-            color: #fff;
-            border: 2px solid #fff;
-            padding: 10px 15px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-        }
+    /* ===== Tool container ===== */
+    .tool-wrap{
+      max-width: var(--maxw); margin:18px auto 40px; padding:0 16px;
+    }
+    .panel{
+      background: var(--panel);
+      border:1px solid var(--frame);
+      border-radius:16px;
+      box-shadow: 0 0 24px rgba(255,255,255,.10);
+      padding:18px;
+    }
 
-        .ui-button:hover,
-        input[type="text"]:focus {
-            background-color: #fff;
-            color: #000;
-            box-shadow: 0 0 10px #fff;
-            outline: none;
-        }
+    /* Controls row */
+    #ui-container{
+      display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+      margin: 4px 0 14px;
+    }
+    .ui-button, input[type="text"]{
+      background:#111; color:#fff; border:1px solid #fff; border-radius:8px;
+      padding:10px 14px; font: 16px/1 "Courier Prime",monospace; cursor:pointer;
+      transition:.15s all ease; box-shadow:0 0 8px rgba(255,255,255,.15) inset;
+    }
+    .ui-button:hover, input[type="text"]:focus{background:#fff; color:#000; outline:none}
+    input[type="file"]{display:none}
+    label.ui-button{cursor:pointer}
 
-        input[type="file"] {
-            display: none;
-        }
+    /* Canvas frame */
+    #canvas-container{
+      border: 2px solid #fff; border-radius:10px; overflow:hidden;
+      box-shadow: 0 0 14px #fff, 0 0 26px #fff;
+      background:#0a0a0a;
+    }
 
-        label.ui-button {
-            cursor: pointer;
-        }
-        
-        /* Scanline overlay for retro CRT monitor effect */
-        #scanline-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1000;
-            background: repeating-linear-gradient(
-                to bottom,
-                rgba(0, 0, 0, 0),
-                rgba(0, 0, 0, 0.4) 1px,
-                rgba(0, 0, 0, 0.4) 2px,
-                rgba(0, 0, 0, 0) 3px
-            );
-        }
-    </style>
+    /* CRT scanline overlay */
+    .scanlines{
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background: repeating-linear-gradient(to bottom,
+        rgba(255,255,255,.02) 0px,
+        rgba(255,255,255,.02) 1px,
+        transparent 2px, transparent 3px);
+    }
+  </style>
 </head>
 <body>
-    <h2 id="logo-title">Basement Noise</h2>
-    <h1>Producer Type Beat Linker</h1>
 
-    <!-- UI Controls -->
-    <div id="ui-container">
+  <!-- Site header (logo + nav back home) -->
+  <div class="site-header">
+    <div class="bar">
+      <a class="brand" href="/basement-noise/">
+        <img src="/basement-noise/basement_noise-Logo-02.png" alt="Basement Noise">
+        <span>Basement Noise</span>
+      </a>
+      <nav>
+        <a href="/basement-noise/">Home</a>
+        <a href="/basement-noise/tools/wheel-decide/">Wheel Decide</a>
+        <a href="/basement-noise/tools/producer-linker/">Producer Linker</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Page title -->
+  <header class="page">
+    <h1 class="logo-title">Producer Type Beat Linker</h1>
+    <p class="subtitle">Upload producers, add vibes, and link them with a retro zap.</p>
+  </header>
+
+  <!-- Tool -->
+  <main class="tool-wrap">
+    <section class="panel">
+      <!-- Controls stay ABOVE the canvas and centered -->
+      <div id="ui-container">
         <label for="upload-face" class="ui-button">Upload Producer</label>
         <input type="file" id="upload-face" accept="image/*">
-        
         <input type="text" id="topic-input" placeholder="Add genre/vibe...">
         <button id="add-topic" class="ui-button">Add Vibe</button>
         <button id="link-button" class="ui-button">LINK BEAT</button>
         <button id="reset-button" class="ui-button">Reset Links</button>
-        <!-- MODIFIED: "Remove Last" button text updated -->
         <button id="remove-button" class="ui-button">Remove Last Unlinked</button>
-        <!-- DELETED: Magnet button removed -->
-    </div>
+      </div>
 
-    <!-- p5.js Canvas Container -->
-    <div id="canvas-container"></div>
-    <!-- Scanline Overlay -->
-    <div id="scanline-overlay"></div>
+      <!-- Canvas frame -->
+      <div id="canvas-container"></div>
+    </section>
+  </main>
 
-    <script>
-        // --- Globals ---
-        let faces = [];
-        let topics = [];
-        let particles = [];
-        let canvas;
-        
-        // --- Sound Effect Globals ---
-        let noise, noiseEnv, osc, oscEnv;
-        // NEW: Sound for error/fail state
-        let oscFail, oscFailEnv; 
-        let soundInitialized = false;
-        let notes = [110.00, 130.81, 146.83, 164.81, 196.00, 220.00]; // A2, C3, D3, E3, G3, A3
+  <div class="scanlines"></div>
 
-        // --- NEW: Interaction Globals ---
-        let draggedObject = null; // Stores the object being dragged
-        let shakeAmount = 0; // For screen shake effect
-        
-        // NEW: Array for "zap" link effects
-        let zaps = [];
+  <script>
+    /* ========= p5 SKETCH (unchanged logic) ========= */
 
-        // --- Constants ---
-        const FACE_SIZE = 80; // Diameter of the face image
-        const TOPIC_HEIGHT = 30;
-        const PARTICLE_COUNT = 30; // Base particle count
-        // DELETED: STAR_COUNT not needed
+    // Globals
+    let faces = [], topics = [], particles = [], canvas;
+    let noise, noiseEnv, osc, oscEnv, oscFail, oscFailEnv;
+    let soundInitialized = false;
+    let notes = [110,130.81,146.83,164.81,196,220];
+    let draggedObject = null, shakeAmount = 0, zaps = [];
+    const FACE_SIZE = 80, TOPIC_HEIGHT = 30, PARTICLE_COUNT = 30;
 
-        // --- p5.js Setup ---
-        function setup() {
-            canvas = createCanvas(800, 500);
-            canvas.parent('canvas-container');
-            
-            pixelDensity(1);
-            frameRate(60);
-            textAlign(CENTER, CENTER);
-            textFont('Courier New');
-            // NEW: Set rect mode globally
-            rectMode(CENTER);
-            
-            // DELETED: Star population loop
+    // Responsive sizing based on the panel width
+    function getCanvasSize(){
+      const wrap = document.getElementById('canvas-container');
+      const w = Math.min(wrap.clientWidth, 1000);      // cap max width
+      const h = Math.round(w * 0.6);                   // 16:9-ish (adjust as you like)
+      return {w, h};
+    }
 
-            // --- UI Element Listeners ---
-            document.getElementById('upload-face').addEventListener('change', (event) => {
-                if (event.target.files && event.target.files[0]) {
-                    let file = event.target.files[0];
-                    let reader = new FileReader();
-                    reader.onload = (e) => {
-                        loadImage(e.target.result, (loadedImg) => {
-                            faces.push(new Face(loadedImg));
-                        });
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+    function setup(){
+      const {w,h} = getCanvasSize();
+      canvas = createCanvas(w, h);
+      canvas.parent('canvas-container');
 
-            select('#add-topic').mousePressed(addTopic);
-            select('#topic-input').elt.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') addTopic();
-            });
-            
-            select('#link-button').mousePressed(linkRandom);
-            select('#reset-button').mousePressed(resetLinks);
-            select('#remove-button').mousePressed(removeLast);
-            // DELETED: Magnet button listener
+      pixelDensity(1); frameRate(60);
+      textAlign(CENTER, CENTER); textFont('Courier New'); rectMode(CENTER);
+
+      document.getElementById('upload-face').addEventListener('change',(e)=>{
+        if (e.target.files && e.target.files[0]){
+          let reader = new FileReader();
+          reader.onload = (ev)=> loadImage(ev.target.result, (img)=> faces.push(new Face(img)));
+          reader.readAsDataURL(e.target.files[0]);
         }
+      });
 
-        // --- p5.js Draw Loop ---
-        function draw() {
-            // NEW: Screen shake effect
-            push();
-            if (shakeAmount > 0) {
-                translate(random(-shakeAmount, shakeAmount), random(-shakeAmount, shakeAmount));
-                shakeAmount -= 1; // Decrease shake over time
-            }
+      select('#add-topic').mousePressed(addTopic);
+      select('#topic-input').elt.addEventListener('keyup', (e)=>{ if(e.key==='Enter') addTopic(); });
+      select('#link-button').mousePressed(linkRandom);
+      select('#reset-button').mousePressed(resetLinks);
+      select('#remove-button').mousePressed(removeLast);
+    }
 
-            // NEW: Draw full-screen static instead of background
-            drawStatic();
+    function windowResized(){
+      const {w,h} = getCanvasSize();
+      resizeCanvas(w,h);
+    }
 
-            // DELETED: Star update/display loop
+    function draw(){
+      push();
+      if (shakeAmount>0){ translate(random(-shakeAmount,shakeAmount), random(-shakeAmount,shakeAmount)); shakeAmount--; }
 
-            // Update and display particles
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].display();
-                if (particles[i].isDead()) {
-                    particles.splice(i, 1);
-                }
-            }
+      drawStatic();
 
-            // NEW: Draw link "zap" effects
-            for (let i = zaps.length - 1; i >= 0; i--) {
-                drawZap(zaps[i]);
-                zaps[i].life--;
-                if (zaps[i].life <= 0) {
-                    zaps.splice(i, 1);
-                }
-            }
+      for(let i=particles.length-1;i>=0;i--){ particles[i].update(); particles[i].display(); if(particles[i].isDead()) particles.splice(i,1); }
+      for(let i=zaps.length-1;i>=0;i--){ drawZap(zaps[i]); zaps[i].life--; if(zaps[i].life<=0) zaps.splice(i,1); }
 
-            // --- NEW: Check Hovers (no physics) ---
-            let somethingIsHovered = false;
-            // Check topics first (they draw on top)
-            for (let i = topics.length - 1; i >= 0; i--) {
-                if (topics[i].checkHover()) {
-                    somethingIsHovered = true;
-                }
-            }
-            // Check faces
-            for (let i = faces.length - 1; i >= 0; i--) {
-                // Don't check hover on face if a topic on top of it is already hovered
-                if (!somethingIsHovered && faces[i].checkHover()) {
-                    somethingIsHovered = true;
-                }
-            }
-            
-            // --- Set Cursor Style ---
-            if (draggedObject) {
-                canvas.style('cursor', 'grabbing');
-            } else if (somethingIsHovered) {
-                canvas.style('cursor', 'grab');
-            } else {
-                canvas.style('cursor', 'default');
-            }
+      let hovering = false;
+      for (let i=topics.length-1;i>=0;i--) if (topics[i].checkHover()) hovering = true;
+      for (let i=faces.length-1;i>=0;i--) if (!hovering && faces[i].checkHover()) hovering = true;
 
+      if (draggedObject) canvas.style('cursor','grabbing');
+      else if (hovering) canvas.style('cursor','grab');
+      else canvas.style('cursor','default');
 
-            // DELETED: All collision-handling loops
+      for (let f of faces){ f.update(); f.display(); }
+      for (let t of topics){ t.update(); t.display(); }
+      drawSpeckles();
+      pop();
+    }
 
-            // Update and display faces
-            for (let f of faces) {
-                f.update();
-                f.display();
-            }
-            
-            // Update and display topics
-            // Topics are drawn *after* faces so linked topics appear on top
-            for (let t of topics) {
-                t.update();
-                t.display();
-            }
-            
-            // Draw retro noise effect (speckles)
-            drawSpeckles();
+    // UI actions
+    function addTopic(){
+      const v = select('#topic-input').value(); if(!v.trim()) return;
+      topics.push(new Topic(v)); select('#topic-input').value('');
+    }
+    function createParticleBurst(x,y){ for(let i=0;i<PARTICLE_COUNT*1.5;i++) particles.push(new Particle(x,y)); }
+    function linkRandom(){
+      let unFaces = faces.filter(f=>!f.linkedTopic);
+      let unTopics = topics.filter(t=>!t.isLinked);
+      if (unFaces.length && unTopics.length){
+        let f = unFaces[floor(random(unFaces.length))];
+        let t = unTopics[floor(random(unTopics.length))];
+        f.linkedTopic = t; t.isLinked = true; t.linkedFace = f;
+        f.triggerGlitch(); createParticleBurst(f.pos.x, f.pos.y);
+        zaps.push({from:f.pos.copy(), to:t.pos.copy(), life:20});
+        if (soundInitialized){ osc.freq(random(notes)); noiseEnv.play(noise); oscEnv.play(osc); }
+      } else triggerError();
+    }
+    function resetLinks(){ for(let f of faces) f.linkedTopic=null; for(let t of topics){ t.isLinked=false; t.linkedFace=null; } }
+    function removeLast(){
+      for(let i=faces.length-1;i>=0;i--) if(!faces[i].linkedTopic){ faces.splice(i,1); break; }
+      for(let i=topics.length-1;i>=0;i--) if(!topics[i].isLinked){ topics.splice(i,1); break; }
+    }
+    function triggerError(){ shakeAmount = 10; if (soundInitialized) oscFailEnv.play(oscFail); }
 
-            // NEW: Reset translation matrix after shake
-            pop();
+    // Init sound on first click
+    function initSound(){
+      if (typeof userStartAudio!=='function'){ console.error('p5.sound not loaded'); return false; }
+      userStartAudio();
+      try{
+        noise = new p5.Noise('white'); noise.amp(0); noise.start();
+        noiseEnv = new p5.Env(); noiseEnv.setADSR(.01,.1,0,.1);
+        osc = new p5.Oscillator('sine'); osc.amp(0); osc.start();
+        oscEnv = new p5.Env(); oscEnv.setADSR(.01,.2,.1,.3); oscEnv.setRange(.5,0);
+        oscFail = new p5.Oscillator('sawtooth'); oscFail.freq(60); oscFail.amp(0); oscFail.start();
+        oscFailEnv = new p5.Env(); oscFailEnv.setADSR(.01,.05,0,.05); oscFailEnv.setRange(.3,0);
+        soundInitialized = true; return true;
+      }catch(e){ console.error('sound init fail',e); return false; }
+    }
+
+    function mousePressed(){
+      if (!soundInitialized){ initSound(); return; }
+      for (let i=topics.length-1;i>=0;i--){
+        let t = topics[i];
+        if (t.isLinked && t.isHovered){ if (t.linkedFace) t.linkedFace.linkedTopic=null; t.isLinked=false; t.linkedFace=null; return; }
+      }
+      if (!draggedObject){ for(let i=topics.length-1;i>=0;i--) if (topics[i].isHovered){ draggedObject=topics[i]; break; } }
+      if (!draggedObject){ for(let i=faces.length-1;i>=0;i--) if (faces[i].isHovered){ draggedObject=faces[i]; break; } }
+      if (draggedObject){ draggedObject.isDragging=true; draggedObject.dragOffset.set(draggedObject.pos.x-mouseX, draggedObject.pos.y-mouseY); canvas.style('cursor','grabbing'); }
+    }
+    function mouseDragged(){ if (draggedObject) draggedObject.pos.set(mouseX+draggedObject.dragOffset.x, mouseY+draggedObject.dragOffset.y); }
+    function mouseReleased(){ if (draggedObject){ draggedObject.isDragging=false; draggedObject=null; canvas.style('cursor','grab'); } }
+
+    // FX
+    function drawSpeckles(){ stroke(255,15); strokeWeight(1); for(let i=0;i<300;i++) point(random(width), random(height)); }
+    function drawStatic(){ noStroke(); for(let i=0;i<10;i++){ fill(random(0,50), random(10,30)); rect(random(width), random(height), random(width/2), random(height/10)); } }
+    function drawZap(z){
+      push(); let a = map(z.life,0,20,0,255);
+      stroke(255,255,0,a); strokeWeight(3+z.life*.2);
+      let m = p5.Vector.lerp(z.from,z.to,.5); m.add(p5.Vector.random2D().mult(z.life*1.5));
+      noFill(); beginShape(); vertex(z.from.x,z.from.y); vertex(m.x,m.y); vertex(z.to.x,z.to.y); endShape();
+      stroke(255,a); strokeWeight(1+z.life*.1);
+      beginShape(); vertex(z.from.x,z.from.y); vertex(m.x,m.y); vertex(z.to.x,z.to.y); endShape(); pop();
+    }
+
+    // Base classes
+    class BaseItem{
+      constructor(x,y,r){ this.pos=createVector(x,y); this.radius=r; this.isDragging=false; this.dragOffset=createVector(0,0); this.isHovered=false; }
+      checkHover(){ if(this.isDragging){ this.isHovered=false; return false; } const d=dist(mouseX,mouseY,this.pos.x,this.pos.y); this.isHovered = d<this.radius; return this.isHovered; }
+      update(){}
+    }
+    class Face extends BaseItem{
+      constructor(img){ super(random(FACE_SIZE/2, width-FACE_SIZE/2), random(FACE_SIZE/2, height/2), FACE_SIZE/2);
+        this.img=img; this.img.filter(GRAY); this.linkedTopic=null; this.glitchAmount=0; }
+      triggerGlitch(){ this.glitchAmount=1; }
+      update(){ this.glitchAmount = max(0, this.glitchAmount - .05); }
+      display(){
+        push(); translate(this.pos.x,this.pos.y); imageMode(CENTER);
+        if(this.isHovered && !this.isDragging) scale(1.05);
+        if(this.glitchAmount>0){
+          let gx=random(-5,5)*this.glitchAmount, gy=random(-5,5)*this.glitchAmount;
+          drawingContext.globalCompositeOperation='lighter';
+          tint(255,0,0,150*this.glitchAmount); image(this.img,gx,gy,FACE_SIZE,FACE_SIZE);
+          tint(0,255,0,150*this.glitchAmount); image(this.img,-gx,-gy,FACE_SIZE,FACE_SIZE);
+          tint(0,0,255,150*this.glitchAmount); image(this.img,gx/2,gy/2,FACE_SIZE,FACE_SIZE);
+          drawingContext.globalCompositeOperation='source-over'; noTint();
         }
-
-        // --- UI Callback Functions ---
-        function addTopic() {
-            let text = select('#topic-input').value();
-            if (text.trim() === '') return;
-            topics.push(new Topic(text));
-            select('#topic-input').value('');
+        if(this.glitchAmount>0) tint(255,255*(1-this.glitchAmount*.5));
+        image(this.img,0,0,FACE_SIZE,FACE_SIZE); noTint();
+        noFill(); stroke(this.isHovered? 'rgb(0,255,0)':'#fff'); strokeWeight(this.isHovered?3:2);
+        rect(0,0,FACE_SIZE+2,FACE_SIZE+2,8); pop();
+      }
+    }
+    class Topic extends BaseItem{
+      constructor(text){
+        let w = textWidth(text)+30;
+        super(random(w/2, width-w/2), random(height/2, height-TOPIC_HEIGHT/2), max(w/2, TOPIC_HEIGHT/2));
+        this.text=text; this.width=w; this.height=TOPIC_HEIGHT; this.isLinked=false; this.linkedFace=null; this.pulse=random(1); this.pulseDir=1;
+      }
+      update(){
+        if(this.isLinked && this.linkedFace){
+          let ty = this.linkedFace.pos.y - this.linkedFace.radius - (this.height/2) - 10;
+          if(ty < this.height/2) ty = this.height/2;
+          this.pos.x = this.linkedFace.pos.x; this.pos.y = ty;
+          this.pulse += this.pulseDir*.05; if(this.pulse>1 || this.pulse<0){ this.pulseDir*=-1; this.pulse=constrain(this.pulse,0,1); }
         }
-
-        function createParticleBurst(x, y) {
-            // NEW: More particles for a bigger burst
-            for (let i = 0; i < PARTICLE_COUNT * 1.5; i++) {
-                particles.push(new Particle(x, y));
-            }
+      }
+      display(){
+        push(); translate(this.pos.x,this.pos.y); if(this.isHovered && !this.isDragging) scale(1.05);
+        stroke(this.isHovered? 'rgb(0,255,0)':'#fff'); strokeWeight(this.isHovered?3:1);
+        if(this.isLinked){
+          let e = .5*(1 - cos(this.pulse*PI)), a = 50 + e*100; noStroke(); fill(255,a); rect(0,0,this.width+5,this.height+5,8);
+          stroke(this.isHovered? 'rgb(0,255,0)':'#fff'); strokeWeight(this.isHovered?3:1);
+          fill('#fff'); rect(0,0,this.width,this.height,5); noStroke(); fill('#000'); text(this.text,0,0);
+        }else{
+          fill('#000'); rect(0,0,this.width,this.height,5); noStroke(); fill('#fff'); text(this.text,0,0);
         }
-        
-        /**
-         * Finds one unlinked face and one unlinked topic and links them.
-         */
-        function linkRandom() {
-            let unlinkedFaces = faces.filter(f => !f.linkedTopic);
-            let unlinkedTopics = topics.filter(t => !t.isLinked);
-
-            if (unlinkedFaces.length > 0 && unlinkedTopics.length > 0) {
-                let randomFace = unlinkedFaces[floor(random(unlinkedFaces.length))];
-                let randomTopic = unlinkedTopics[floor(random(unlinkedTopics.length))];
-                
-                // Create the two-way link
-                randomFace.linkedTopic = randomTopic;
-                randomTopic.isLinked = true;
-                randomTopic.linkedFace = randomFace; 
-                
-                randomFace.triggerGlitch();
-                createParticleBurst(randomFace.pos.x, randomFace.pos.y);
-                
-                // NEW: Add a "zap" effect
-                zaps.push({ 
-                    from: randomFace.pos.copy(), 
-                    to: randomTopic.pos.copy(), 
-                    life: 20 // 20 frames long
-                });
-                
-                if (soundInitialized) {
-                    let randomNote = random(notes);
-                    osc.freq(randomNote);
-                    noiseEnv.play(noise);
-                    oscEnv.play(osc);
-                }
-            } else {
-                // NEW: Trigger error effect if no links can be made
-                triggerError();
-            }
-        }
-        
-        /**
-         * Resets all links between faces and topics.
-         */
-        function resetLinks() {
-            for (let f of faces) {
-                f.linkedTopic = null;
-            }
-            for (let t of topics) {
-                t.isLinked = false;
-                t.linkedFace = null; // Remove the link back to the face
-            }
-        }
-
-        // NEW: Re-added the missing removeLast function
-        function removeLast() {
-            // Find the last unlinked face
-            for (let i = faces.length - 1; i >= 0; i--) {
-                if (!faces[i].linkedTopic) {
-                    faces.splice(i, 1); // Remove it
-                    break; // Only remove one
-                }
-            }
-            // Find the last unlinked topic
-            for (let i = topics.length - 1; i >= 0; i--) {
-                if (!topics[i].isLinked) {
-                    topics.splice(i, 1); // Remove it
-                    break; // Only remove one
-                }
-            }
-        }
-
-        // NEW: Added the missing triggerError function
-        function triggerError() {
-            shakeAmount = 10; // Set shake intensity
-            if (soundInitialized) {
-                oscFailEnv.play(oscFail);
-            }
-        }
-
-        // DELETED: toggleMagnet function
-
-        // NEW: Extracted sound initialization logic
-        function initSound() {
-            if (typeof userStartAudio !== 'function') {
-                console.error("p5.sound.js is not loaded yet. Please click again.");
-                return false;
-            }
-            userStartAudio();
-
-            try {
-                // Link success sounds
-                noise = new p5.Noise('white');
-                noise.amp(0);
-                noise.start();
-                noiseEnv = new p5.Env();
-                noiseEnv.setADSR(0.01, 0.1, 0, 0.1);
-
-                osc = new p5.Oscillator('sine');
-                osc.amp(0);
-                osc.start();
-                oscEnv = new p5.Env();
-                oscEnv.setADSR(0.01, 0.2, 0.1, 0.3);
-                oscEnv.setRange(0.5, 0);
-
-                // NEW: Link fail/error sound
-                oscFail = new p5.Oscillator('sawtooth');
-                oscFail.freq(60); // Low "buzz"
-                oscFail.amp(0);
-                oscFail.start();
-                oscFailEnv = new p5.Env();
-                oscFailEnv.setADSR(0.01, 0.05, 0, 0.05); // Very short "thud"
-                oscFailEnv.setRange(0.3, 0);
-                
-                soundInitialized = true;
-                return true;
-            } catch (e) {
-                console.error("Failed to initialize sound:", e);
-                return false;
-            }
-        }
-
-
-        // --- Mouse Interaction ---
-        function mousePressed() {
-            // Initialize p5.sound on the first user click
-            if (!soundInitialized) {
-                if(initSound()) {
-                    return; // Don't try to drag on the same click that inits sound
-                } else {
-                    return; // Sound failed to init
-                }
-            }
-
-            // NEW: Check for clicking a linked topic to break the link
-            // Loop backwards to catch the top-most topic
-            for (let i = topics.length - 1; i >= 0; i--) {
-                let t = topics[i];
-                if (t.isLinked && t.isHovered) {
-                    if (t.linkedFace) {
-                        t.linkedFace.linkedTopic = null; // Break link from face
-                    }
-                    t.isLinked = false;
-                    t.linkedFace = null;
-                    return; // Stop processing this click
-                }
-            }
-
-            // Check if mouse is over any object to start dragging
-            // Loop backwards so we grab the top-most object
-            if (!draggedObject) {
-                for (let i = topics.length - 1; i >= 0; i--) {
-                    // NEW: Use isHovered property
-                    if (topics[i].isHovered) {
-                        draggedObject = topics[i];
-                        break;
-                    }
-                }
-            }
-            if (!draggedObject) {
-                for (let i = faces.length - 1; i >= 0; i--) {
-                    // NEW: Use isHovered property
-                    if (faces[i].isHovered) {
-                        draggedObject = faces[i];
-                        break;
-                    }
-                }
-            }
-
-            // If we found an object, set its drag properties
-            if (draggedObject) {
-                draggedObject.isDragging = true;
-                draggedObject.dragOffset.set(draggedObject.pos.x - mouseX, draggedObject.pos.y - mouseY);
-                // NEW: Set cursor to "grabbing" immediately
-                canvas.style('cursor', 'grabbing');
-            }
-        }
-
-        // p5 function to handle dragging
-        function mouseDragged() {
-            if (draggedObject) {
-                draggedObject.pos.set(mouseX + draggedObject.dragOffset.x, mouseY + draggedObject.dragOffset.y);
-                // DELETED: No velocity to set
-            }
-        }
-
-        // p5 function to handle releasing a dragged object
-        function mouseReleased() {
-            if (draggedObject) {
-                draggedObject.isDragging = false;
-                draggedObject = null;
-                // NEW: Reset cursor to 'grab' if still hovering
-                canvas.style('cursor', 'grab');
-            }
-        }
-
-
-        // --- Retro Effects ---
-        // NEW: Renamed from drawNoise to drawSpeckles
-        function drawSpeckles() {
-            stroke(255, 15);
-            strokeWeight(1);
-            for (let i = 0; i < 300; i++) {
-                point(random(width), random(height));
-            }
-        }
-
-        // NEW: Full-screen static effect
-        function drawStatic() {
-            noStroke();
-            for(let i = 0; i < 10; i++) {
-                fill(random(0, 50), random(10, 30));
-                rect(random(width), random(height), random(width/2), random(height/10));
-            }
-        }
-
-        // NEW: Draw "zap" effect
-        function drawZap(zap) {
-            push();
-            let alpha = map(zap.life, 0, 20, 0, 255);
-            stroke(255, 255, 0, alpha); // Bright yellow
-            strokeWeight(3 + zap.life * 0.2); // Thicker when new
-            
-            let mid = p5.Vector.lerp(zap.from, zap.to, 0.5);
-            mid.add(p5.Vector.random2D().mult(zap.life * 1.5)); // Add jaggedness
-            
-            noFill();
-            beginShape();
-            vertex(zap.from.x, zap.from.y);
-            vertex(mid.x, mid.y);
-            vertex(zap.to.x, zap.to.y);
-            endShape();
-            
-            // Inner white core
-            stroke(255, alpha);
-            strokeWeight(1 + zap.life * 0.1);
-            beginShape();
-            vertex(zap.from.x, zap.from.y);
-            vertex(mid.x, mid.y);
-            vertex(zap.to.x, zap.to.y);
-            endShape();
-            pop();
-        }
-
-
-        // --- Entity Classes ---
-
-        /** * NEW: Base Class for interactable items
-         * Handles position, dragging, and hover state.
-         */
-        class BaseItem {
-            constructor(x, y, r) {
-                this.pos = createVector(x, y);
-                this.radius = r; // For hover/click detection
-                
-                this.isDragging = false;
-                this.dragOffset = createVector(0, 0);
-                this.isHovered = false;
-            }
-
-            // NEW: Check for hover and update state
-            checkHover() {
-                // Don't check hover if being dragged
-                if (this.isDragging) {
-                    this.isHovered = false; // Ensure it's false
-                    return false;
-                }
-                let d = dist(mouseX, mouseY, this.pos.x, this.pos.y);
-                this.isHovered = d < this.radius;
-                return this.isHovered;
-            }
-
-            // Update shell (to be overridden)
-            update() {}
-        }
-
-
-        /** * Face Class (Producer)
-         * Extends BaseItem
-         */
-        class Face extends BaseItem {
-            constructor(img) {
-                // MODIFIED: Call new BaseItem constructor
-                super(random(FACE_SIZE / 2, width - FACE_SIZE / 2), random(FACE_SIZE / 2, height / 2), FACE_SIZE / 2);
-                this.img = img;
-                this.img.filter(GRAY); // Make image grayscale
-                this.linkedTopic = null;
-                
-                // NEW: Glitch effect property
-                this.glitchAmount = 0; 
-            }
-
-            // NEW: Method to trigger the glitch
-            triggerGlitch() {
-                this.glitchAmount = 1.0; // Start glitch at full intensity
-            }
-
-            update() {
-                // DELETED: super.update() call
-                
-                // NEW: Decay the glitch effect over time
-                if (this.glitchAmount > 0) {
-                    this.glitchAmount -= 0.05; // Lower value = longer glitch
-                } else {
-                    this.glitchAmount = 0;
-                }
-            }
-
-            display() {
-                push();
-                translate(this.pos.x, this.pos.y);
-                imageMode(CENTER);
-
-                // NEW: Hover scale effect
-                if (this.isHovered && !this.isDragging) {
-                    scale(1.05);
-                }
-
-                // NEW: Glitch Effect Logic
-                if (this.glitchAmount > 0) {
-                    // Draw offset color channels for a "VHS" glitch
-                    let gX = (random(-5, 5) * this.glitchAmount);
-                    let gY = (random(-5, 5) * this.glitchAmount);
-                    
-                    // Use 'lighter' to blend the colors
-                    drawingContext.globalCompositeOperation = 'lighter';
-                    
-                    // 1. Red Channel (offset)
-                    tint(255, 0, 0, 150 * this.glitchAmount);
-                    image(this.img, gX, gY, FACE_SIZE, FACE_SIZE);
-                    
-                    // 2. Green Channel (offset)
-                    tint(0, 255, 0, 150 * this.glitchAmount);
-                    image(this.img, -gX, -gY, FACE_SIZE, FACE_SIZE);
-                    
-                    // 3. Blue Channel (offset)
-                    tint(0, 0, 255, 150 * this.glitchAmount);
-                    image(this.img, gX / 2, gY / 2, FACE_SIZE, FACE_SIZE);
-                    
-                    // Reset blend mode and tint
-                    drawingContext.globalCompositeOperation = 'source-over';
-                    noTint();
-                }
-                
-                // --- Base Image ---
-                // Draw the normal image, slightly faded if glitching
-                if(this.glitchAmount > 0) {
-                   tint(255, 255 * (1.0 - this.glitchAmount * 0.5)); 
-                }
-                image(this.img, 0, 0, FACE_SIZE, FACE_SIZE);
-                noTint();
-                
-                // Rounded square border
-                noFill();
-                // NEW: Set stroke color based on hover
-                if (this.isHovered) {
-                    stroke(0, 255, 0); // Green
-                    strokeWeight(3);
-                } else {
-                    stroke(255); // White
-                    strokeWeight(2);
-                }
-                rect(0, 0, FACE_SIZE + 2, FACE_SIZE + 2, 8); // 8px border radius
-                pop();
-            }
-        }
-
-        /** * Topic Class (Vibe/Genre)
-         * Extends BaseItem
-         */
-        class Topic extends BaseItem {
-            constructor(text) {
-                // ... existing constructor code ...
-                let tempWidth = textWidth(text) + 30; // 30 for padding
-                // MODIFIED: Call new BaseItem constructor
-                super(random(tempWidth / 2, width - tempWidth / 2), random(height / 2, height - TOPIC_HEIGHT / 2), Math.max(tempWidth / 2, TOPIC_HEIGHT / 2)); 
-                
-                this.text = text;
-                this.width = tempWidth;
-                this.height = TOPIC_HEIGHT;
-                this.isLinked = false;
-                this.linkedFace = null; 
-                
-                // NEW: Properties for pulsing glow
-                this.pulse = random(1.0); // Start at random pulse point
-                this.pulseDir = 1;
-            }
-
-            update() {
-                if (this.isLinked && this.linkedFace) {
-                    // If linked, lock position above the face
-                    let targetY = this.linkedFace.pos.y - this.linkedFace.radius - (this.height / 2) - 10; // 10px padding
-                    
-                    // Clamp to top edge if face bounces too high
-                    if (targetY < this.height / 2) {
-                        targetY = this.height / 2;
-                    }
-
-                    this.pos.x = this.linkedFace.pos.x;
-                    this.pos.y = targetY;
-                    // DELETED: vel.set(0,0) (no vel anymore)
-
-                    // NEW: Update pulsing animation
-                    this.pulse += this.pulseDir * 0.05;
-                    if (this.pulse > 1.0 || this.pulse < 0) {
-                        this.pulseDir *= -1; // Reverse direction
-                        this.pulse = constrain(this.pulse, 0, 1.0);
-                    }
-
-                } 
-                // DELETED: 'else' block with super.update()
-            }
-
-            // DELETED: checkCollision method
-
-            display() {
-                push();
-                translate(this.pos.x, this.pos.y);
-                
-                // NEW: Hover scale effect
-                if (this.isHovered && !this.isDragging) {
-                    scale(1.05);
-                }
-
-                // NEW: Set stroke color based on hover
-                if (this.isHovered) {
-                    stroke(0, 255, 0); // Green
-                    strokeWeight(3);
-                } else {
-                    stroke(255); // White
-                    strokeWeight(1);
-                }
-                
-                // Linked topics get a slightly different style
-                if (this.isLinked) {
-                    // NEW: Pulsing glow effect
-                    // lerpEaseInOut: 0.5 * (1.0 - cos(this.pulse * PI))
-                    let easedPulse = 0.5 * (1.0 - cos(this.pulse * PI));
-                    let glowAlpha = 50 + (easedPulse * 100); // 50 to 150
-                    noStroke();
-                    fill(255, glowAlpha);
-                    // Draw a soft "glow" rectangle behind the main one
-                    rect(0, 0, this.width + 5, this.height + 5, 8); 
-                    
-                    // Redraw stroke for main box
-                    if (this.isHovered) {
-                        stroke(0, 255, 0);
-                        strokeWeight(3);
-                    } else {
-                        stroke(255);
-                        strokeWeight(1);
-                    }
-                    
-                    fill(255); // White background
-                    rect(0, 0, this.width, this.height, 5);
-                    noStroke();
-                    fill(0); // Black text
-                    text(this.text, 0, 0);
-                } else {
-                    fill(0); // Black background
-                    rect(0, 0, this.width, this.height, 5);
-                    noStroke();
-                    fill(255); // White text
-                    text(this.text, 0, 0);
-                }
-                pop();
-            }
-        }
-
-        /** * Particle Class (for link effect)
-         */
-        class Particle {
-            constructor(x, y) {
-                this.pos = createVector(x, y);
-                // NEW: More explosive velocity
-                this.vel = p5.Vector.random2D().mult(random(2, 6)); 
-                // NEW: Varied lifespan and decay
-                this.lifespan = random(150, 255);
-                this.decay = random(3, 6);
-            }
-            
-            update() {
-                this.pos.add(this.vel);
-                this.vel.mult(0.98); // Slow down
-                this.lifespan -= this.decay; // Fade out at varied speed
-            }
-            
-            isDead() {
-                return this.lifespan < 0;
-            }
-            
-            // NEW: "Cooler" display as flickering bits
-            display() {
-                // Flicker effect
-                let flicker = random(100, 255);
-                noStroke();
-                fill(flicker, this.lifespan);
-                // Draw as small rects (like digital bits)
-                rect(this.pos.x, this.pos.y, 4, 4); // Already set to CENTER
-            }
-        }
-
-        // DELETED: BackgroundStar class
-    </script>
+        pop();
+      }
+    }
+    class Particle{
+      constructor(x,y){ this.pos=createVector(x,y); this.vel=p5.Vector.random2D().mult(random(2,6)); this.lifespan=random(150,255); this.decay=random(3,6); }
+      update(){ this.pos.add(this.vel); this.vel.mult(.98); this.lifespan -= this.decay; }
+      isDead(){ return this.lifespan<0; }
+      display(){ let f=random(100,255); noStroke(); fill(f,this.lifespan); rect(this.pos.x,this.pos.y,4,4); }
+    }
+  </script>
 </body>
 </html>
