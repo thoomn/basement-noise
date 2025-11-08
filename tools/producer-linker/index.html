@@ -14,28 +14,21 @@
 
   <style>
     :root{
-      --bg:#000; --panel:#101010; --ink:#f3f3f3; --muted:#bcbcbc; --frame:#2d2d2d; --glow:rgba(255,255,255,.12);
+      --bg:#000; --panel:#0f0f10; --ink:#f3f3f3; --muted:#bcbcbc; --frame:#27272a;
       --maxw:1100px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Courier Prime",monospace}
     a{color:inherit}
 
-    /* ===== Background layers ===== */
-    #bgfx{
-      position:fixed; inset:0; z-index:0;   /* canvas animation layer */
-      display:block; width:100%; height:100%;
-    }
-    .scanlines{
-      position:fixed; inset:0; pointer-events:none; z-index:1;
+    /* ===== Background layers (IDENTICAL to home) ===== */
+    #bgCanvas{ position:fixed; inset:0; z-index:0; }
+    .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:0;
       background: repeating-linear-gradient(to bottom,
         rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px,
-        transparent 2px, transparent 3px);
-    }
-    .vignette{
-      position:fixed; inset:0; z-index:2; pointer-events:none;
-      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%);
-    }
+        transparent 2px, transparent 3px); }
+    .vignette{ position:fixed; inset:0; z-index:0; pointer-events:none;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%); }
 
     /* ===== Header (matches home) ===== */
     .site-header{
@@ -49,7 +42,7 @@
       display:flex; align-items:center; justify-content:space-between; gap:16px;
     }
     .brand{display:flex; align-items:center; gap:12px; text-decoration:none}
-    .brand img{height:36px; width:auto; filter: drop-shadow(0 0 10px var(--glow))}
+    .brand img{height:36px; width:auto; filter: drop-shadow(0 0 10px rgba(255,255,255,.12))}
     .brand .name{
       font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1rem;
       animation:glitch 2.2s linear infinite;
@@ -63,10 +56,7 @@
 
     /* ===== Title / Tagline ===== */
     .hero{ max-width:var(--maxw); margin:28px auto 8px; padding:0 16px; text-align:center; position:relative; z-index:5; }
-    .title{
-      font-family:Orbitron, sans-serif; letter-spacing:3px; font-size:2rem; margin:4px 0 6px;
-      text-shadow:0 0 20px rgba(255,255,255,.08);
-    }
+    .title{ font-family:Orbitron, sans-serif; letter-spacing:3px; font-size:2rem; margin:4px 0 6px; text-shadow:0 0 20px rgba(255,255,255,.08); }
     .subtitle{ color:var(--muted); margin:0; }
 
     /* ===== Tool container ===== */
@@ -76,21 +66,19 @@
       box-shadow:0 0 24px rgba(255,255,255,.10);
     }
 
-    /* Controls row */
     .controls{
       display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
       margin:4px 0 16px;
     }
     .ui, .controls input[type="text"]{
       background:#111; color:#fff; border:1px solid #fff; border-radius:8px;
-      padding:10px 14px; font: 16px/1 "Courier Prime",monospace; cursor:pointer;
+      padding:10px 14px; font:16px/1 "Courier Prime",monospace; cursor:pointer;
       transition:.15s all ease; box-shadow:0 0 8px rgba(255,255,255,.15) inset;
     }
     .ui:hover, .controls input[type="text"]:focus{ background:#fff; color:#000; outline:none }
     .controls input[type="file"]{ display:none }
     label.ui{ cursor:pointer }
 
-    /* Canvas frame */
     #canvas-container{
       border:2px solid #fff; border-radius:10px; overflow:hidden; background:#0a0a0a;
       box-shadow:0 0 14px #fff, 0 0 26px #fff;
@@ -102,8 +90,8 @@
 </head>
 <body>
 
-  <!-- Animated background canvas -->
-  <canvas id="bgfx"></canvas>
+  <!-- Background canvas + overlays (IDENTICAL to home) -->
+  <canvas id="bgCanvas"></canvas>
   <div class="scanlines"></div>
   <div class="vignette"></div>
 
@@ -122,7 +110,7 @@
     </div>
   </div>
 
-  <!-- Page title -->
+  <!-- Title -->
   <div class="hero">
     <h1 class="title">Producer Type Beat Linker</h1>
     <p class="subtitle">Upload producers, add vibes, and link them with a retro zap.</p>
@@ -149,81 +137,40 @@
 
   <footer>© Basement Noise</footer>
 
-  <!-- ===== Background animation (matches home vibe) ===== -->
+  <!-- ===== Background animation script (copied from HOME) ===== -->
   <script>
-    (function(){
-      const canvas = document.getElementById('bgfx');
-      const ctx = canvas.getContext('2d', { alpha:false });
+    const c = document.getElementById('bgCanvas');
+    const ctx = c.getContext('2d', { alpha: false });
+    let w, h, t = 0;
 
-      let w=0, h=0, dpi=1;
-      let shapes=[];          // “stairs/blocks”
-      const COL = '#0f0f10';
-      const COL2 = '#141414';
+    function resize(){ w = c.width = innerWidth; h = c.height = innerHeight; }
+    addEventListener('resize', resize); resize();
 
-      function resize(){
-        dpi = window.devicePixelRatio || 1;
-        w = canvas.clientWidth = window.innerWidth;
-        h = canvas.clientHeight = window.innerHeight;
-        canvas.width = Math.floor(w * dpi);
-        canvas.height = Math.floor(h * dpi);
-        ctx.setTransform(dpi,0,0,dpi,0,0);
-        spawn();
+    function drawGrain(){
+      const img = ctx.getImageData(0,0,w,h);
+      const d = img.data;
+      for(let i=0;i<d.length;i+=4){
+        const n = 8 + (Math.random()*12)|0;
+        d[i]=d[i+1]=d[i+2]=n; // grayscale speckle
       }
-
-      function spawn(){
-        shapes = [];
-        const cols = Math.ceil(w/140);
-        const rows = Math.ceil(h/120)+4;
-        for(let y=0;y<rows;y++){
-          for(let x=0;x<cols;x++){
-            const bw = 120 + Math.random()*40;
-            const bh = 20 + Math.random()*10;
-            const ox = x*140 + (y%2?20:0) + (Math.random()*6-3);
-            const oy = y*90 + (Math.random()*6-3);
-            shapes.push({x:ox, y:oy, w:bw, h:bh, a:0.06+Math.random()*0.05, v:0.12+Math.random()*0.08});
-          }
-        }
-      }
-
-      function grain(){
-        const density = 250; // tiny specks
-        ctx.fillStyle = 'rgba(255,255,255,.015)';
-        for(let i=0;i<density;i++){
-          const gx = Math.random()*w, gy = Math.random()*h;
-          ctx.fillRect(gx, gy, 1, 1);
-        }
-      }
-
-      function tick(t){
-        if (document.hidden){ requestAnimationFrame(tick); return; }
-
-        // subtle gradient base
-        const g = ctx.createLinearGradient(0,0,0,h);
-        g.addColorStop(0,'#000'); g.addColorStop(1,'#050505');
-        ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
-
-        // drifting blocks
-        for(const s of shapes){
-          s.y += s.v; if (s.y > h+100) s.y = -120;
-          ctx.fillStyle = `rgba(255,255,255,${s.a})`;
-          ctx.fillRect(s.x, s.y, s.w, s.h);
-
-          // inner darker bar for “step” look
-          ctx.fillStyle = (Math.random()>.5)?COL:COL2;
-          ctx.fillRect(s.x, s.y+s.h-3, s.w, 3);
-        }
-
-        grain();
-        requestAnimationFrame(tick);
-      }
-
-      window.addEventListener('resize', resize);
-      document.addEventListener('visibilitychange', ()=>{/* keep loop but skip heavy draws when hidden */});
-      resize(); requestAnimationFrame(tick);
-    })();
+      ctx.putImageData(img,0,0);
+    }
+    function drawStairs(){
+      ctx.save(); ctx.globalAlpha=.05; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+      const steps=6, bx=w*0.12+Math.sin(t*.0008)*w*.02, by=h*0.25+Math.cos(t*.0006)*h*.02;
+      for(let s=0;s<steps;s++){ ctx.strokeRect(bx+s*26, by+s*18, 120, 34); }
+      const rx=w*0.68+Math.cos(t*.0007)*w*.02, ry=h*0.62+Math.sin(t*.0005)*h*.02;
+      for(let s=0;s<steps;s++){ ctx.strokeRect(rx-s*24, ry-s*16, 140, 36); }
+      ctx.restore();
+    }
+    function tick(now){
+      t = now; ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+      drawGrain(); drawStairs(); requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
   </script>
 
-  <!-- ===== App (p5.js) ===== -->
+  <!-- ===== p5.js app (unchanged) ===== -->
   <script>
     // Globals
     let faces = [], topics = [], particles = [], canvas;
@@ -360,7 +307,6 @@
       beginShape(); vertex(z.from.x,z.from.y); vertex(m.x,m.y); vertex(z.to.x,z.to.y); endShape(); pop();
     }
 
-    // Entities
     class BaseItem{
       constructor(x,y,r){ this.pos=createVector(x,y); this.radius=r; this.isDragging=false; this.dragOffset=createVector(0,0); this.isHovered=false; }
       checkHover(){ if(this.isDragging){ this.isHovered=false; return false; } const d=dist(mouseX,mouseY,this.pos.x,this.pos.y); this.isHovered = d<this.radius; return this.isHovered; }
