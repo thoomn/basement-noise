@@ -1,32 +1,268 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Basement Noise</title>
-  <link rel="stylesheet" href="style.css" />
-  <meta name="description" content="A creative collective building interactive tools for music producers and content creators." />
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Courier+Prime&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#000; --panel:#0f0f10; --ink:#f3f3f3; --muted:#bcbcbc; --frame:#27272a; --accent:#e5e5e5;
+      --maxw:1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Courier Prime",monospace}
+    a{color:inherit}
+
+    /* ===== Header ===== */
+    .site-header{
+      position:sticky; top:0; z-index:20;
+      background:rgba(0,0,0,.85);
+      border-bottom:1px solid #191919;
+      backdrop-filter: blur(6px);
+    }
+    .bar{
+      max-width:var(--maxw); margin:0 auto; padding:10px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    }
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none}
+    .brand img{height:36px; width:auto; filter: drop-shadow(0 0 10px rgba(255,255,255,.12))}
+    .brand span{font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1rem}
+    nav a{display:inline-block; margin-left:10px; padding:6px 10px; border:1px solid #2e2e2e; border-radius:8px; text-decoration:none}
+    nav a:hover{border-color:#fff; background:#fff; color:#000}
+
+    /* ===== Hero ===== */
+    .hero{
+      position:relative; z-index:1;
+      max-width:var(--maxw); margin:48px auto 22px; padding:0 16px;
+    }
+    .title{
+      display:flex; align-items:center; gap:14px; margin:0 0 8px 0;
+      font-family:Orbitron, sans-serif; font-size:2.2rem; letter-spacing:4px;
+      text-shadow:0 0 20px rgba(255,255,255,.08);
+      animation:glitch 2.2s linear infinite;
+    }
+    .title img{height:42px; width:auto}
+    @keyframes glitch{
+      0%,100%{ text-shadow:0 0 12px #fff, 2px -2px 0 #f00, -2px 2px 0 #0ff }
+      50%    { text-shadow:0 0 12px #fff, -2px 2px 0 #f00, 2px -2px 0 #0ff }
+    }
+    .tagline{color:var(--muted); max-width:780px; margin:6px 0 24px}
+
+    /* ===== Cards ===== */
+    .cards{
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:22px; margin-top:18px;
+    }
+    .card{
+      background:var(--panel); border:1px solid var(--frame); border-radius:14px;
+      padding:18px; box-shadow:0 0 22px rgba(255,255,255,.07);
+      transition:.18s transform, .18s box-shadow, .18s border-color;
+    }
+    .card:hover{ transform:translateY(-4px); border-color:#fff; box-shadow:0 0 28px rgba(255,255,255,.16); }
+    .card h3{ margin:0 0 6px; font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1.15rem }
+    .card p{ margin:0 0 12px; color:#b9b9b9; min-height:48px }
+    .card a{ display:inline-block; text-decoration:none; border:1px solid #fff; border-radius:8px; padding:8px 14px }
+    .card a:hover{ background:#fff; color:#000 }
+
+    /* ===== Sections ===== */
+    section{ position:relative; z-index:1; }
+    .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 16px; }
+    .section{ margin:40px 0; }
+    h2.sec{ font-family:Orbitron, sans-serif; letter-spacing:3px; margin:0 0 14px; }
+    .lead{ color:var(--muted); max-width:840px }
+
+    .steps{
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;
+      margin-top:12px;
+    }
+    .step{
+      background:#0c0c0c; border:1px solid #222; border-radius:12px; padding:14px;
+    }
+    .step b{ font-family:Orbitron, sans-serif; letter-spacing:1px }
+
+    /* ===== CTA row ===== */
+    .cta{
+      display:flex; flex-wrap:wrap; gap:12px; margin-top:16px;
+    }
+    .btn{
+      display:inline-block; text-decoration:none; border:1px solid #fff; border-radius:10px; padding:10px 16px;
+    }
+    .btn:hover{ background:#fff; color:#000 }
+
+    /* ===== Footer ===== */
+    footer{ color:#8a8a8a; font-size:.88rem; padding:24px 16px 40px; text-align:center }
+
+    /* ===== Background layers ===== */
+    #bgCanvas{ position:fixed; inset:0; z-index:0; }
+    /* subtle scanlines overlay */
+    .scanlines{
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background: repeating-linear-gradient(to bottom,
+        rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px,
+        transparent 2px, transparent 3px);
+    }
+    /* vignette */
+    .vignette{
+      position:fixed; inset:0; z-index:0; pointer-events:none;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%);
+    }
+  </style>
 </head>
 <body>
-  <header class="wrap">
-    <h1>Basement Noise</h1>
-    <p>A creative collective building interactive tools for music producers and content creators.</p>
-  </header>
 
-  <main class="wrap grid">
-    <a class="card" href="tools/wheel-decide/">
-      <h2>🎡 Wheel Decide</h2>
-      <p>Spin for random samples & challenges.</p>
-    </a>
+  <!-- Header -->
+  <div class="site-header">
+    <div class="bar">
+      <a class="brand" href="/basement-noise/">
+        <img src="/basement-noise/basement_noise_logo_design.png" alt="Basement Noise">
+        <span>Basement Noise</span>
+      </a>
+      <nav>
+        <a href="/basement-noise/">Home</a>
+        <a href="/basement-noise/tools/wheel-decide/">Wheel Decide</a>
+        <a href="/basement-noise/tools/producer-linker/">Producer Linker</a>
+      </nav>
+    </div>
+  </div>
 
-    <a class="card" href="tools/producer-linker/">
-      <h2>🔗 Producer Linker</h2>
-      <p>Link producers to prompts in a fun, animated way.</p>
-    </a>
-  </main>
+  <!-- Hero -->
+  <div class="hero">
+    <h1 class="title">
+      <img src="/basement-noise/basement_noise_logo_design.png" alt="" />
+      Basement Noise
+    </h1>
+    <p class="tagline">
+      A creative collective of friends making beats, filming fast-paced challenges, and shipping little web tools for producers and content creators.
+    </p>
 
-  <footer class="wrap">
-    <p>© Basement Noise</p>
-  </footer>
+    <div class="cards">
+      <div class="card">
+        <h3>🎛 Wheel Decide</h3>
+        <p>Spin for random samples, genres, or constraints. Great for warm-ups and challenge videos.</p>
+        <a href="/basement-noise/tools/wheel-decide/">Open Tool</a>
+      </div>
+      <div class="card">
+        <h3>🎵 Producer Linker</h3>
+        <p>Upload faces, add vibes, and link ideas in a glitchy retro interface—perfect for team prompts.</p>
+        <a href="/basement-noise/tools/producer-linker/">Open Tool</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- About -->
+  <section class="section">
+    <div class="wrap">
+      <h2 class="sec">About the Collective</h2>
+      <p class="lead">
+        Basement Noise is a small crew of producers who record beat challenges together—quick prompts, hard timers, and honest reaction takes.
+        We post the highlights to socials and drop our tools here for anyone to use.
+      </p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section">
+    <div class="wrap">
+      <h2 class="sec">How Our Challenges Work</h2>
+      <div class="steps">
+        <div class="step"><b>1) Spin</b><br/>Pick a random sample, genre, or constraint with Wheel Decide.</div>
+        <div class="step"><b>2) Cook</b><br/>30 minutes on the clock. Build the idea in your DAW—no perfection, just momentum.</div>
+        <div class="step"><b>3) Link</b><br/>Use Producer Linker to pair people to prompts and track the chaos.</div>
+        <div class="step"><b>4) React</b><br/>Record first-listen reactions, then cut short clips for socials.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Join / Contact -->
+  <section class="section">
+    <div class="wrap">
+      <h2 class="sec">Stay in the Loop</h2>
+      <div class="cta">
+        <a class="btn" href="mailto:hello@example.com">Email Us</a>
+        <a class="btn" href="#" target="_blank" rel="noreferrer">Instagram</a>
+        <a class="btn" href="#" target="_blank" rel="noreferrer">TikTok</a>
+        <a class="btn" href="#" target="_blank" rel="noreferrer">YouTube</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>© Basement Noise • Built by friends in the lab 🧠🎚</footer>
+
+  <!-- Background canvas + overlays -->
+  <canvas id="bgCanvas"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <script>
+    // ===== Animated background: soft grain + drifting "stairs" accents =====
+    const c = document.getElementById('bgCanvas');
+    const ctx = c.getContext('2d', { alpha: false });
+    let w, h, t = 0;
+
+    function resize(){
+      w = c.width = window.innerWidth;
+      h = c.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function rand(a,b){ return Math.random()*(b-a)+a; }
+
+    function drawGrain(){
+      const img = ctx.getImageData(0,0,w,h);
+      const data = img.data;
+      for(let i=0;i<data.length;i+=4){
+        const n = 8 + (Math.random()*12)|0; // tiny variance
+        data[i]   = n; // r
+        data[i+1] = n; // g
+        data[i+2] = n; // b
+        // alpha stays 255
+      }
+      ctx.putImageData(img,0,0);
+    }
+
+    function drawStairs(){
+      ctx.save();
+      ctx.globalAlpha = 0.05;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+
+      const steps = 6;
+      const baseX = w*0.12 + Math.sin(t*0.0008)*w*0.02;
+      const baseY = h*0.25 + Math.cos(t*0.0006)*h*0.02;
+
+      for(let s=0; s<steps; s++){
+        const x = baseX + s*26;
+        const y = baseY + s*18;
+        ctx.strokeRect(x, y, 120, 34);
+      }
+      // mirrored subtle set
+      const bx = w*0.68 + Math.cos(t*0.0007)*w*0.02;
+      const by = h*0.62 + Math.sin(t*0.0005)*h*0.02;
+      for(let s=0; s<steps; s++){
+        const x = bx - s*24;
+        const y = by - s*16;
+        ctx.strokeRect(x, y, 140, 36);
+      }
+
+      ctx.restore();
+    }
+
+    function tick(now){
+      t = now;
+      // Base fill to black
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0,0,w,h);
+
+      drawGrain();   // static grain layer
+      drawStairs();  // drifting geometric accents
+
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  </script>
 </body>
 </html>
