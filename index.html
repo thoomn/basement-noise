@@ -3,185 +3,201 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Basement Noise</title>
-
+  <title>Basement Noise • Producer Collective</title>
+  <meta name="description" content="Basement Noise is a creative producer collective. We run beat challenges, record & edit content together, and build open-source tools for the community." />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Courier+Prime&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg:#000; --panel:#0f0f10; --ink:#f3f3f3; --muted:#bcbcbc; --frame:#27272a;
-      --maxw:1100px;
+      --bg:#000; --panel:#0f0f10; --ink:#f3f3f3; --muted:#bcbcbc; --frame:#27272a; --maxw:1100px;
+      --accent:#ffffff; /* keep monochrome; hover flips to white */
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Courier Prime",monospace}
-    a{color:inherit}
+    a{color:inherit;text-decoration:none}
 
-    /* ===== Header (glitch title lives here) ===== */
-    .site-header{
-      position:sticky; top:0; z-index:20;
-      background:rgba(0,0,0,.85);
-      border-bottom:1px solid #191919;
-      backdrop-filter: blur(6px);
-    }
-    .bar{
-      max-width:var(--maxw); margin:0 auto; padding:10px 16px;
-      display:flex; align-items:center; justify-content:space-between; gap:16px;
-    }
-    .brand{display:flex; align-items:center; gap:12px; text-decoration:none}
-    .brand img{height:36px; width:auto; filter: drop-shadow(0 0 10px rgba(255,255,255,.12))}
-    .brand .name{
-      font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1rem;
-      animation:glitch 2.2s linear infinite; /* moved glitch here */
-    }
+    /* Header */
+    .site-header{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.85);border-bottom:1px solid #191919;backdrop-filter:blur(6px)}
+    .bar{max-width:var(--maxw);margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{height:36px;width:auto;filter:drop-shadow(0 0 10px rgba(255,255,255,.12))}
+    .name{font-family:Orbitron,sans-serif;letter-spacing:2px;font-size:1rem;animation:glitch 2.2s linear infinite}
     @keyframes glitch{
-      0%,100%{ text-shadow:0 0 12px #fff, 2px -2px 0 #f00, -2px 2px 0 #0ff }
-      50%    { text-shadow:0 0 12px #fff, -2px 2px 0 #f00, 2px -2px 0 #0ff }
+      0%,100%{text-shadow:0 0 12px #fff,2px -2px 0 #f00,-2px 2px 0 #0ff}
+      50%{text-shadow:0 0 12px #fff,-2px 2px 0 #f00,2px -2px 0 #0ff}
     }
-    nav a{display:inline-block; margin-left:10px; padding:6px 10px; border:1px solid #2e2e2e; border-radius:8px; text-decoration:none}
-    nav a:hover{border-color:#fff; background:#fff; color:#000}
+    nav a{margin-left:10px;padding:6px 10px;border:1px solid #2e2e2e;border-radius:8px}
+    nav a:hover{border-color:#fff;background:#fff;color:#000}
 
-    /* ===== Hero (simpler now) ===== */
-    .hero{ max-width:var(--maxw); margin:32px auto 12px; padding:0 16px; }
-    .tagline{color:var(--muted); max-width:780px; margin:6px 0 24px}
+    /* Layout */
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+    section{position:relative;z-index:1}
+    .section{margin:44px 0}
+    h2.sec{font-family:Orbitron,sans-serif;letter-spacing:3px;margin:0 0 14px}
+    .lead{color:var(--muted);max-width:880px}
 
-    /* ===== Cards ===== */
-    .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:22px; }
-    .card{
-      background:var(--panel); border:1px solid var(--frame); border-radius:14px;
-      padding:18px; box-shadow:0 0 22px rgba(255,255,255,.07);
-      transition:.18s transform, .18s box-shadow, .18s border-color;
-    }
-    .card:hover{ transform:translateY(-4px); border-color:#fff; box-shadow:0 0 28px rgba(255,255,255,.16); }
-    .card h3{ margin:0 0 6px; font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1.15rem }
-    .card p{ margin:0 0 12px; color:#b9b9b9; min-height:48px }
-    .card a{ display:inline-block; text-decoration:none; border:1px solid #fff; border-radius:8px; padding:8px 14px }
-    .card a:hover{ background:#fff; color:#000 }
+    /* Hero */
+    .hero{max-width:var(--maxw);margin:26px auto 6px;padding:0 16px}
+    .hero h1{font-family:Orbitron,sans-serif;letter-spacing:4px;margin:0 0 8px}
+    .tagline{color:var(--muted);max-width:820px;margin:8px 0 18px}
+    .cta-row{display:flex;flex-wrap:wrap;gap:10px}
+    .cta{border:1px solid var(--accent);border-radius:10px;padding:10px 14px}
+    .cta:hover{background:#fff;color:#000}
 
-    /* ===== Sections ===== */
-    section{ position:relative; z-index:1; }
-    .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 16px; }
-    .section{ margin:40px 0; }
-    h2.sec{ font-family:Orbitron, sans-serif; letter-spacing:3px; margin:0 0 14px; }
-    .lead{ color:var(--muted); max-width:840px }
+    /* Pillars / Cards */
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:18px}
+    .card{background:var(--panel);border:1px solid var(--frame);border-radius:14px;padding:18px;box-shadow:0 0 22px rgba(255,255,255,.07);transition:.18s transform,.18s box-shadow,.18s border-color}
+    .card:hover{transform:translateY(-3px);border-color:#fff;box-shadow:0 0 28px rgba(255,255,255,.16)}
+    .card h3{margin:0 0 6px;font-family:Orbitron,sans-serif;letter-spacing:2px;font-size:1.05rem}
+    .card p{margin:0;color:#b9b9b9}
 
-    /* Flows */
-    .flows{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:20px; }
-    .flow{ background:#0c0c0c; border:1px solid #222; border-radius:12px; padding:16px; }
-    .flow h3{ margin:0 0 8px; font-family:Orbitron, sans-serif; letter-spacing:2px; }
-    .step{ margin:10px 0; padding:10px; border:1px dashed #303030; border-radius:10px; }
-    .flow .open{ margin-top:10px; display:inline-block; border:1px solid #fff; border-radius:8px; padding:8px 12px; text-decoration:none }
-    .flow .open:hover{ background:#fff; color:#000 }
+    /* Two flows */
+    .flows{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+    .flow{background:#0c0c0c;border:1px solid #222;border-radius:12px;padding:16px}
+    .flow h3{margin:0 0 10px;font-family:Orbitron,sans-serif;letter-spacing:2px}
+    .step{margin:10px 0;padding:10px;border:1px dashed #303030;border-radius:10px}
 
-    /* ===== Socials ===== */
-    .cta{ display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; }
-    .btn{ display:inline-block; text-decoration:none; border:1px solid #fff; border-radius:10px; padding:10px 16px; }
-    .btn:hover{ background:#fff; color:#000 }
+    /* Tool cards */
+    .tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+    .tool .go{display:inline-block;margin-top:10px;border:1px solid #fff;border-radius:8px;padding:8px 12px}
+    .tool .go:hover{background:#fff;color:#000}
 
-    /* ===== Footer ===== */
-    footer{ color:#8a8a8a; font-size:.88rem; padding:24px 16px 40px; text-align:center }
+    /* Footer */
+    footer{color:#8a8a8a;font-size:.88rem;padding:28px 16px 46px;text-align:center}
 
-    /* ===== Background layers (unchanged) ===== */
-    #bgCanvas{ position:fixed; inset:0; z-index:0; }
-    .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:0;
-      background: repeating-linear-gradient(to bottom,
-        rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px,
-        transparent 2px, transparent 3px);}
-    .vignette{ position:fixed; inset:0; z-index:0; pointer-events:none;
-      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%); }
+    /* Background */
+    #bgCanvas{position:fixed;inset:0;z-index:0}
+    .scanlines{position:fixed;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.02) 0px,rgba(255,255,255,.02) 1px,transparent 2px,transparent 3px)}
+    .vignette{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%)}
   </style>
 </head>
 <body>
-
-  <!-- Header with glitch brand -->
-  <div class="site-header">
+  <!-- Header -->
+  <div class="site-header" role="banner">
     <div class="bar">
       <a class="brand" href="/basement-noise/">
-        <img src="/basement-noise/basement_noise_logo_design.png" alt="Basement Noise">
+        <img src="/basement-noise/basement_noise_logo_design.png" alt="Basement Noise logo">
         <span class="name">Basement Noise</span>
       </a>
-      <nav>
-        <a href="/basement-noise/">Home</a>
-        <a href="/basement-noise/tools/wheel-decide/">Wheel Decide</a>
-        <a href="/basement-noise/tools/producer-linker/">Producer Linker</a>
+      <nav aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#challenges">Challenges</a>
+        <a href="#tools">Tools</a>
+        <a href="#join">Join</a>
       </nav>
     </div>
   </div>
 
-  <!-- Hero (no duplicate glitch title) -->
-  <div class="hero">
+  <!-- Hero -->
+  <header class="hero">
+    <h1>Basement Noise</h1>
     <p class="tagline">
-      A creative collective of friends making beats, filming fast-paced challenges, and
-      shipping little web tools for producers and content creators.
+      A creative <b>producer collective</b> where music, coding, and content collide.
+      We run beat challenges, film the process, turn it into short + long form, and ship
+      tiny open-source tools the whole scene can use.
     </p>
+    <div class="cta-row">
+      <a class="cta" href="#challenges" aria-label="Jump to challenges">🎥 Join a Beat Challenge</a>
+      <a class="cta" href="#tools" aria-label="Jump to tools">🎛 Explore Producer Tools</a>
+      <a class="cta" href="https://discord.gg/" target="_blank" rel="noreferrer">🎧 Join the Discord</a>
+    </div>
 
-    <div class="cards">
+    <!-- Pillars -->
+    <div class="cards" style="margin-top:20px">
       <div class="card">
-        <h3>🎛 Wheel Decide</h3>
-        <p>Spin for random samples, genres, or constraints. Great for warm-ups and challenge videos.</p>
-        <a href="/basement-noise/tools/wheel-decide/">Open Tool</a>
+        <h3>🎡 Challenges</h3>
+        <p>Two a month. Quick prompts, hard timers, real reactions. Everyone records their process so we can cut highlights for socials.</p>
       </div>
       <div class="card">
-        <h3>🎵 Producer Linker</h3>
-        <p>Upload faces, add vibes, and link ideas in a glitchy retro interface—perfect for team prompts.</p>
-        <a href="/basement-noise/tools/producer-linker/">Open Tool</a>
+        <h3>🎬 Content</h3>
+        <p>We edit into Shorts/Reels/TikToks + longer cuts. Members post on their own pages <b>and</b> on Basement Noise to double reach.</p>
+      </div>
+      <div class="card">
+        <h3>💾 Open Source</h3>
+        <p>Community-built tools under the MIT License—use them, fork them, remix them. Ideas welcome in <b>#couch</b>.</p>
       </div>
     </div>
-  </div>
+  </header>
 
   <!-- About -->
-  <section class="section">
+  <section id="about" class="section">
     <div class="wrap">
       <h2 class="sec">About the Collective</h2>
       <p class="lead">
-        Basement Noise is a small crew of producers who record beat challenges together—quick prompts,
-        hard timers, and honest reaction takes. We post the highlights to socials and drop our tools
-        here for anyone to use.
+        We’re a small crew of producers documenting the way we actually create—quick decisions, happy accidents, and first-listen reactions.
+        The goal is simple: make better music together, build helpful tools, and amplify everyone’s online presence.
       </p>
     </div>
   </section>
 
-  <!-- Two separate flows -->
-  <section class="section">
+  <!-- How it works -->
+  <section id="challenges" class="section">
     <div class="wrap">
       <h2 class="sec">How Our Challenges Work</h2>
       <div class="flows">
-        <!-- Wheel Decide flow -->
         <div class="flow">
-          <h3>🎛 Wheel Decide Flow</h3>
-          <div class="step"><b>1) Spin</b> — Randomize a sample, genre, or rule.</div>
-          <div class="step"><b>2) Flip</b> — Grab the sound, chop or resample fast.</div>
-          <div class="step"><b>3) Build</b> — 30-minute timer. Drums, bass, hook—don’t overthink.</div>
-          <div class="step"><b>4) React</b> — First-listen reactions on camera.</div>
-          <a class="open" href="/basement-noise/tools/wheel-decide/">Open Wheel Decide</a>
+          <h3>🎲 General Flow</h3>
+          <div class="step"><b>1) Prompt</b> — Draw a rule, genre, or sample (wheel or linker).</div>
+          <div class="step"><b>2) Build</b> — ~30 minute timer. Drums, bass, hook—don’t overthink.</div>
+          <div class="step"><b>3) Capture</b> — Screen + camera on; keep the first takes honest.</div>
+          <div class="step"><b>4) React</b> — First-listen reactions, then pick moments for edits.</div>
+          <p style="color:#9c9c9c;margin:8px 0 0">Cadence: <b>two challenges per month</b>. Pitch ideas in <b>#couch</b>.</p>
         </div>
 
-        <!-- Producer Linker flow -->
         <div class="flow">
-          <h3>🎵 Producer Linker Flow</h3>
-          <div class="step"><b>1) Add Producers</b> — Upload faces for each person.</div>
-          <div class="step"><b>2) Add Vibes</b> — Type genres/prompts (e.g., “Spanish type beat”).</div>
+          <h3>🧠 Producer Linker</h3>
+          <div class="step"><b>1) Add Producers</b> — Drop faces for each person (private to the session).</div>
+          <div class="step"><b>2) Add Vibes</b> — Write prompts like “Spanish type beat,” “Tape-warped pads.”</div>
           <div class="step"><b>3) Link</b> — Hit LINK to assign prompts with a zap.</div>
-          <div class="step"><b>4) Cook + React</b> — Build fast, then record reactions.</div>
-          <a class="open" href="/basement-noise/tools/producer-linker/">Open Producer Linker</a>
+          <div class="step"><b>4) Cook + React</b> — Build fast; capture the chaos.</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Socials -->
-  <section class="section">
+  <!-- Tools -->
+  <section id="tools" class="section">
     <div class="wrap">
-      <h2 class="sec">Stay in the Loop</h2>
-      <div class="cta">
-        <a class="btn" href="mailto:hello@example.com">Email Us</a>
-        <a class="btn" href="https://www.instagram.com/basementnoisecollective/" target="_blank" rel="noreferrer">Instagram</a>
-        <a class="btn" href="https://www.tiktok.com/@basement.noise" target="_blank" rel="noreferrer">TikTok</a>
-        <a class="btn" href="https://www.youtube.com/@basementnoise" target="_blank" rel="noreferrer">YouTube</a>
+      <h2 class="sec">Producer Tools</h2>
+      <p class="lead">Utilities we use in our sessions—free for anyone to try, fork, or extend.</p>
+      <div class="tool-grid">
+        <div class="card tool">
+          <h3>🎛 Wheel Decide</h3>
+          <p>Spin for random samples, genres, or constraints. Great for warm-ups and challenge videos.</p>
+          <a class="go" href="/basement-noise/tools/wheel-decide/">Open Wheel Decide</a>
+        </div>
+        <div class="card tool">
+          <h3>🧠 Producer Linker</h3>
+          <p>Upload faces, add vibes, and link ideas in a glitchy retro interface—perfect for team prompts.</p>
+          <a class="go" href="/basement-noise/tools/producer-linker/">Open Producer Linker</a>
+        </div>
+        <div class="card tool">
+          <h3>🧰 More Soon</h3>
+          <p>Have an idea for a tool? Post it in <b>#couch</b> or open an issue/PR on our repo.</p>
+          <a class="go" href="https://thoomn.github.io/basement-noise/">Browse All</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <footer>© Basement Noise • Built by friends in the lab 🧠🎚</footer>
+  <!-- Join -->
+  <section id="join" class="section">
+    <div class="wrap">
+      <h2 class="sec">Join the Collective</h2>
+      <p class="lead">Jump in, make noise, and help us build. Pick a lane—challenge, content, or code.</p>
+      <div class="cta-row" style="margin-top:10px">
+        <a class="cta" href="https://discord.gg/" target="_blank" rel="noreferrer">🎧 Join Discord</a>
+        <a class="cta" href="https://www.instagram.com/basementnoisecollective/" target="_blank" rel="noreferrer">📸 Instagram</a>
+        <a class="cta" href="https://www.tiktok.com/@basement.noise" target="_blank" rel="noreferrer">🎵 TikTok</a>
+        <a class="cta" href="https://www.youtube.com/@basementnoise" target="_blank" rel="noreferrer">▶️ YouTube</a>
+        <a class="cta" href="https://github.com/thoomn/basement-noise" target="_blank" rel="noreferrer">💾 GitHub Repo</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © Basement Noise • MIT License • Built by noise-makers, for noise-makers.
+  </footer>
 
   <!-- Background canvas + overlays -->
   <canvas id="bgCanvas"></canvas>
@@ -189,15 +205,14 @@
   <div class="vignette"></div>
 
   <script>
-    // Animated background
+    // Minimal animated background: film grain + floating frames
     const c = document.getElementById('bgCanvas');
     const ctx = c.getContext('2d', { alpha: false });
     let w, h, t = 0;
-
     function resize(){ w = c.width = innerWidth; h = c.height = innerHeight; }
     addEventListener('resize', resize); resize();
 
-    function drawGrain(){
+    function grain(){
       const img = ctx.getImageData(0,0,w,h);
       const d = img.data;
       for(let i=0;i<d.length;i+=4){
@@ -206,17 +221,17 @@
       }
       ctx.putImageData(img,0,0);
     }
-    function drawStairs(){
+    function frames(){
       ctx.save(); ctx.globalAlpha=.05; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
-      const steps=6, bx=w*0.12+Math.sin(t*.0008)*w*.02, by=h*0.25+Math.cos(t*.0006)*h*.02;
-      for(let s=0;s<steps;s++){ ctx.strokeRect(bx+s*26, by+s*18, 120, 34); }
+      const bx=w*0.12+Math.sin(t*.0008)*w*.02, by=h*0.25+Math.cos(t*.0006)*h*.02;
+      for(let s=0;s<6;s++) ctx.strokeRect(bx+s*26,by+s*18,120,34);
       const rx=w*0.68+Math.cos(t*.0007)*w*.02, ry=h*0.62+Math.sin(t*.0005)*h*.02;
-      for(let s=0;s<steps;s++){ ctx.strokeRect(rx-s*24, ry-s*16, 140, 36); }
+      for(let s=0;s<6;s++) ctx.strokeRect(rx-s*24,ry-s*16,140,36);
       ctx.restore();
     }
     function tick(now){
       t = now; ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
-      drawGrain(); drawStairs(); requestAnimationFrame(tick);
+      grain(); frames(); requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
   </script>
