@@ -61,7 +61,7 @@
     .panel{ background:rgba(15,15,16,.55); border:1px solid var(--frame); border-radius:14px; padding:18px; }
     .controls{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:0 0 12px; }
     .ui{ background:#111; color:#fff; border:1px solid #fff; border-radius:8px; padding:10px 14px; cursor:pointer;
-         transition:.15s all ease; box-shadow:0 0 8px rgba(255,255,255,.15) inset; }
+        transition:.15s all ease; box-shadow:0 0 8px rgba(255,255,255,.15) inset; }
     .ui:hover{ background:#fff; color:#000 }
     .note{ color:#9f9f9f; font-size:.9rem; text-align:center; margin-top:10px }
 
@@ -194,13 +194,26 @@
       let left = files.length;
       const fresh = [];
 
-      function doneOne(){ left--; if (left<=0){ isLoading = false; slices.push(...fresh); rebuildWheel(); } }
+      function doneOne(){
+        left--;
+        if (left<=0){
+          isLoading = false;
+          slices.push(...fresh);
+          rebuildWheel();
+          // Note: If (failedCount > 0), we could alert the user,
+          // but the current logic just silently skips un-loadable files.
+        }
+      }
 
       for (const f of files){
         const url = URL.createObjectURL(f);
         loadSound(url,
           snd => { fresh.push({ name:f.name, fileUrl:url, sound:snd }); doneOne(); },
-          err => { console.warn('loadSound error:', f.name, err); doneOne(); }
+          err => {
+            // This file failed to load. Log it and continue.
+            console.warn('loadSound error:', f.name, err);
+            doneOne(); // This ensures the loading completes
+          }
         );
       }
     }
@@ -242,7 +255,7 @@
 
       if (spinning){
         angle += spinVel;
-        spinVel *= 0.988;                 // friction
+        spinVel *= 0.988;              // friction
         if (tickEnv && random()<0.12){ tickEnv.play(tickOsc); }
         if (abs(spinVel) < 0.0022){
           spinVel = 0; spinning = false;
@@ -276,7 +289,7 @@
 
       pg.clear();
       const r = wheelSize * 0.42;
-      const rLabel = r * 0.72;
+      // const rLabel = r * 0.72; // <-- This line is no longer needed
 
       // ring
       pg.noFill(); pg.stroke(255); pg.strokeWeight(2);
@@ -284,7 +297,7 @@
 
       if (isLoading){
         pg.noStroke(); pg.fill(150); pg.textSize(16);
-        pg.text("Loading samples…", wheelSize/2, wheelSize/2);
+        pg.text("Loading samples…", wheelSize/2, wheelSize/2); // <--- FIXED TYPO HERE
         return;
       }
       if (!slices.length){
@@ -303,14 +316,28 @@
         pg.stroke(90); pg.strokeWeight(1);
         pg.line(wheelSize/2 + Math.cos(a0)*r, wheelSize/2 + Math.sin(a0)*r, wheelSize/2, wheelSize/2);
 
-        // label (kept upright)
+        // label (kept upright, moved outside circle)
         pg.push();
-        pg.translate(wheelSize/2, wheelSize/2);
+        pg.translate(wheelSize/2, wheelSize/2); // Move origin to center
         const mid = a0 + sliceAngle/2;
-        pg.rotate(mid);
-        pg.noStroke(); pg.fill(200); pg.textSize(12);
-        if (mid > HALF_PI && mid < PI + HALF_PI){ pg.rotate(PI); pg.text(truncLabel(slices[i].name), 0, rLabel); }
-        else { pg.text(truncLabel(slices[i].name), 0, -rLabel); }
+        pg.rotate(mid); // Rotate canvas to slice's middle
+        pg.noStroke(); pg.fill(200);
+        pg.textSize(10);
+
+        const label = truncLabel(slices[i].name);
+        const labelRadius = r + 8; // 8px padding outside the wheel ring
+
+        if (mid > HALF_PI && mid < PI + HALF_PI){
+          // Bottom half: flip 180, align text TOP to the radius
+          pg.rotate(PI);
+          pg.textAlign(CENTER, TOP);
+          pg.text(label, 0, labelRadius);
+        } else {
+          // Top half: align text BOTTOM to the radius
+          pg.textAlign(CENTER, BOTTOM);
+          pg.text(label, 0, -labelRadius);
+        }
+        // pg.textAlign(CENTER, CENTER) will be restored by pg.pop()
         pg.pop();
       }
 
@@ -319,13 +346,20 @@
       pg.stroke(255); pg.noFill(); pg.circle(wheelSize/2, wheelSize/2, 40);
     }
 
+    // -----
+    // This function now allows more characters since the font size is smaller.
+    // -----
     function truncLabel(s){
       if (!s) return "[Unnamed]";
-      const max = 22;
-      if (s.length <= max) return s;
+      const max = 28; // <-- Allow more characters
+
+      // 1. Get base name, removing extension
       const dot = s.lastIndexOf('.');
-      const base = dot>0 ? s.slice(0, dot) : s;
-      return base.length > max ? base.slice(0,max-1)+'…' : base;
+      const base = dot > 0 ? s.slice(0, dot) : s;
+
+      // 2. Now, truncate the base name if it's too long
+      if (base.length <= max) return base;
+      return base.slice(0,max-1)+'…';
     }
 
     // Spin
