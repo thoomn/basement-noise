@@ -1,156 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
   <title>Basement Noise • Basement Brief</title>
 
-  <!-- Site fonts for header + your Brief fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Courier+Prime&family=Inter:wght@400;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+  <!-- Type -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Inter:wght@400;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      /* Site header variables */
-      --site-maxw: 1100px;
-      --ink: #f3f3f3;
-
-      /* Brief app variables */
-      --bg: #050505;
-      --fg: #e0e0e0;
-      --dim: #444;
-      --border: 1px solid #333;
-      --highlight: #fff;
-      --font-head: 'Inter', sans-serif;
-      --font-mono: 'Space Mono', monospace;
+      --bg:#050505;          /* page background */
+      --ink:#e0e0e0;         /* primary text */
+      --muted:#888;          /* secondary text */
+      --dim:#444;            /* low-contrast strokes */
+      --frame:#333;          /* card borders */
+      --maxw:1100px;         /* site width */
+      --font-head:'Inter',sans-serif;
+      --font-mono:'Space Mono',monospace;
     }
 
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%}
-    body{
-      background:#000; color:var(--fg); font-family:var(--font-mono);
-      min-height:100dvh; display:flex; flex-direction:column;
+
+    /* Keep space for sticky header so content never hides beneath it */
+    body{background:var(--bg);color:var(--ink);font-family:var(--font-mono);min-height:100dvh;padding-top:56px;overflow-x:hidden}
+
+    /* Subtle grid + noise (BN vibe) */
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;
+      background-image:
+        linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+      background-size:20px 20px;
+    }
+    body::after{
+      content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
     }
 
-    /* ===== Shared Site Header (matches other tools) ===== */
+    /* ===== Shared BN header (matches home & other tools) ===== */
     .site-header{
-      position:sticky; top:0; z-index:100;
+      position:sticky;top:0;z-index:30;
       background:rgba(0,0,0,.85);
       border-bottom:1px solid #191919;
-      backdrop-filter: blur(6px);
+      backdrop-filter:blur(6px);
     }
-    .bar{
-      max-width:var(--site-maxw); margin:0 auto; padding:10px 16px;
-      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    .site-header .bar{
+      max-width:var(--maxw);margin:0 auto;padding:10px 16px;
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
     }
-    .brand{display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--ink)}
-    .brand img{height:36px; width:auto; filter: drop-shadow(0 0 10px rgba(255,255,255,.12)); background:#111; border-radius:4px}
-    .brand .name{
-      font-family:Orbitron, sans-serif; letter-spacing:2px; font-size:1rem;
+    .site-header .brand{display:flex;align-items:center;gap:12px;color:var(--ink);text-decoration:none}
+    .site-header .brand img{height:36px;width:auto;filter:drop-shadow(0 0 10px rgba(255,255,255,.12))}
+    .site-header .brand .name{
+      font-family:Orbitron, sans-serif;letter-spacing:2px;font-size:1rem;
       animation:glitch 2.2s linear infinite;
     }
     @keyframes glitch{
-      0%,100%{ text-shadow:0 0 12px #fff, 2px -2px 0 #f00, -2px 2px 0 #0ff }
-      50%    { text-shadow:0 0 12px #fff, -2px 2px 0 #f00, 2px -2px 0 #0ff }
+      0%,100%{text-shadow:0 0 12px #fff, 2px -2px 0 #f00, -2px 2px 0 #0ff}
+      50%{text-shadow:0 0 12px #fff, -2px 2px 0 #f00, 2px -2px 0 #0ff}
     }
-    nav a{
-      color:var(--ink); text-decoration:none;
-      margin-left:10px; padding:6px 10px; border:1px solid #2e2e2e; border-radius:8px;
-      font-family:"Courier Prime", monospace; font-size:.9rem;
+    .site-header nav a{
+      color:var(--ink);text-decoration:none;border:1px solid #2e2e2e;border-radius:8px;
+      padding:6px 10px;margin-left:10px;transition:.15s;
     }
-    nav a:hover{border-color:#fff; background:#fff; color:#000}
+    .site-header nav a:hover{border-color:#fff;background:#fff;color:#000}
 
-    /* ===== Background for Brief page (kept from your file) ===== */
-    body::before{
-      content:""; position:fixed; inset:0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size:20px 20px;
-      pointer-events:none; z-index:-2;
-    }
-    body::after{
-      content:""; position:fixed; inset:0;
-      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events:none; z-index:-1;
-    }
-
-    /* ===== Brief App Layout (unchanged, with small top margin) ===== */
-    .page{
-      flex:1;
-      display:flex; align-items:center; justify-content:center;
-      padding:24px 16px;  /* breathing room under header */
-    }
+    /* ===== Connect overlay ===== */
     #overlay{
-      position:fixed; inset:0; background:var(--bg); z-index:50;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      transition:opacity .4s ease; color:var(--fg); font-family:var(--font-mono);
+      position:fixed;inset:0;background:#000;z-index:5;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      transition:opacity .4s ease;
     }
+    #overlay h1{font-family:var(--font-head);font-weight:900;letter-spacing:-2px;margin-bottom:1rem}
+    #overlay p{font-size:.6rem;color:#777;margin-bottom:2rem;letter-spacing:2px}
+    #btn-init{border:1px solid var(--ink);color:var(--ink);padding:1rem 2rem;font-weight:700;background:transparent;cursor:pointer}
+    #btn-init:hover{background:#fff;color:#000}
 
+    /* ===== Card/App ===== */
     #app{
-      width:100%; max-width:420px; opacity:0;
-      display:flex; flex-direction:column; gap:0;
-      border-top:2px solid var(--fg); border-bottom:2px solid var(--fg);
-      background:rgba(5,5,5,0.85); backdrop-filter: blur(10px);
-      position:relative; z-index:10;
+      width:100%;max-width:640px;margin:0 auto;opacity:0;
+      background:rgba(5,5,5,.85);backdrop-filter:blur(10px);
+      border:1px solid var(--frame);border-radius:12px;overflow:hidden;
+      box-shadow:0 0 22px rgba(255,255,255,.07);
+      transition:opacity .35s ease, transform .35s ease;
+      transform:translateY(8px);
     }
-    #app.visible{animation:turn-on .4s cubic-bezier(0.23,1,0.32,1) forwards}
-    @keyframes turn-on{0%{opacity:0; transform:scaleY(.9)}100%{opacity:1; transform:scaleY(1)}}
+    #app.visible{opacity:1;transform:translateY(0)}
 
-    header{
-      padding:1.2rem 0 .8rem 0; border-bottom:var(--border);
-      display:flex; justify-content:space-between; align-items:baseline;
+    header.card{
+      padding:18px 18px 12px;border-bottom:1px solid var(--frame);
+      display:flex;justify-content:space-between;align-items:baseline
     }
-    h1{font-family:var(--font-head); font-weight:900; font-size:1.8rem; line-height:.8; letter-spacing:-2px; margin:0}
-    .meta{font-size:.55rem; color:var(--dim); text-transform:uppercase; text-align:right; letter-spacing:1px}
+    header.card h1{font-family:var(--font-head);font-weight:900;font-size:1.6rem;letter-spacing:-2px}
+    .meta{font-size:.62rem;color:#9a9a9a;text-transform:uppercase;letter-spacing:1px;text-align:right}
 
     .cell{
-      display:grid; grid-template-columns:1fr auto; align-items:center;
-      padding:.7rem 0; border-bottom:var(--border); position:relative;
+      display:grid;grid-template-columns:1fr auto;align-items:center;
+      padding:12px 18px;border-bottom:1px solid var(--frame)
     }
     .cell:last-child{border-bottom:none}
-    .info{display:flex; flex-direction:column}
-    .label{font-size:.5rem; color:var(--dim); font-weight:bold; letter-spacing:1px}
+    .info{display:flex;flex-direction:column}
+    .label{font-size:.6rem;color:#9a9a9a;letter-spacing:1px}
     .value{
-      font-family:var(--font-head); font-weight:800; font-size:1.3rem;
-      letter-spacing:-1px; text-transform:uppercase; color:var(--fg);
-      transition:color .1s; line-height:1; min-height:1.3rem;
+      font-family:var(--font-head);font-weight:800;font-size:1.25rem;letter-spacing:-.5px;
+      text-transform:uppercase;color:var(--ink);line-height:1;min-height:1.25rem;transition:color .1s
     }
-    .value.scrambling{color:var(--dim)}
+    .value.scrambling{color:#777}
 
-    button{
-      background:transparent; border:1px solid var(--dim); color:var(--dim);
-      font-family:var(--font-mono); font-size:.65rem; cursor:pointer; text-transform:uppercase;
-      padding:.4rem .8rem; transition:.2s; letter-spacing:1px;
-    }
-    button:hover{border-color:var(--fg); color:var(--fg)}
-    button:disabled{opacity:.3; cursor:not-allowed; border-color:var(--dim); color:var(--dim)}
-
-    .btn-lock{border:none; padding:5px; font-size:.6rem}
-    .btn-lock.locked{color:var(--fg); font-weight:bold}
+    button{font-family:var(--font-mono);cursor:pointer}
+    .btn-lock{border:1px solid var(--dim);color:#bdbdbd;background:transparent;font-size:.62rem;padding:5px 8px}
+    .btn-lock:hover{border-color:#fff;color:#fff}
+    .btn-lock.locked{color:#fff;border-color:#fff}
 
     .btn-main{
-      width:100%; background:var(--fg); color:#000; border:none;
-      font-family:var(--font-head); font-weight:900; font-size:1rem; padding:1.2rem;
-      letter-spacing:1px; margin-top:1rem;
+      display:block;width:calc(100% - 36px);margin:14px auto 18px;padding:16px;
+      background:#fff;color:#000;border:none;border-radius:8px;font-family:var(--font-head);font-weight:900;letter-spacing:1px
     }
-    .btn-main:hover{background:var(--highlight); color:#000; box-shadow:0 0 20px rgba(255,255,255,.3)}
+    .btn-main:disabled{opacity:.6;cursor:not-allowed}
 
     #sys-log{
-      font-size:.55rem; color:var(--dim); padding-top:.5rem;
-      border-top:var(--border); margin-top:1.5rem;
-      display:flex; justify-content:space-between; align-items:center;
+      font-size:.62rem;color:#9a9a9a;padding:10px 18px;border-top:1px solid var(--frame);
+      display:flex;justify-content:space-between;align-items:center;gap:12px
     }
-    #barcode{width:100%; height:20px; display:flex; gap:2px; margin-top:10px; opacity:.6}
-    .bar{background:var(--fg); height:100%}
+
+    /* Barcode row (responsive, full width) */
+    #barcode{
+      width:100%;height:18px;display:flex;gap:2px;margin:8px 0 2px;opacity:.75;overflow:hidden;padding:0 18px
+    }
+    .bar{background:var(--ink);height:100%}
   </style>
 </head>
 <body>
 
-  <!-- Shared sticky header -->
+  <!-- Shared BN Header -->
   <div class="site-header">
     <div class="bar">
       <a class="brand" href="/basement-noise/">
-        <img src="/basement-noise/basement_noise_logo_design.png" alt="Basement Noise"/>
+        <img src="/basement-noise/basement_noise_logo_design.png" alt="Basement Noise">
         <span class="name">Basement Noise</span>
       </a>
       <nav>
@@ -162,172 +151,225 @@
     </div>
   </div>
 
-  <!-- Overlay + App -->
-  <div class="page">
-    <div id="overlay">
-      <h1 style="margin-bottom:1rem; letter-spacing:-2px;">BASEMENT</h1>
-      <p style="font-size:.6rem; color:#444; margin-bottom:2rem; letter-spacing:2px;">// DATA_CORE //</p>
-      <button id="btn-init" style="border:1px solid #e0e0e0; color:#e0e0e0; padding:1rem 2rem; font-weight:bold;">[ CONNECT ]</button>
-    </div>
-
-    <div id="app">
-      <header>
-        <h1>BRIEF_V107</h1>
-        <div class="meta">
-          <span id="session-id">ID: ---</span><br/>
-          <span>ONLINE</span>
-        </div>
-      </header>
-
-      <div class="cell">
-        <div class="info"><span class="label">01 GENRE</span><span class="value" id="out-g">---</span></div>
-        <button class="btn-lock" data-id="g">LOCK</button>
-      </div>
-      <div class="cell">
-        <div class="info"><span class="label">02 KEY / SCALE</span><span class="value" id="out-k">---</span></div>
-        <button class="btn-lock" data-id="k">LOCK</button>
-      </div>
-      <div class="cell">
-        <div class="info"><span class="label">03 TEMPO</span><span class="value" id="out-t">---</span></div>
-        <button class="btn-lock" data-id="t">LOCK</button>
-      </div>
-      <div class="cell">
-        <div class="info"><span class="label">04 STRUCTURE</span><span class="value" id="out-s">---</span></div>
-        <button class="btn-lock" data-id="s">LOCK</button>
-      </div>
-      <div class="cell" style="border-bottom:none;">
-        <div class="info"><span class="label">05 LIMITATION</span><span class="value" id="out-w">---</span></div>
-        <button class="btn-lock" data-id="w">LOCK</button>
-      </div>
-
-      <div id="sys-log">
-        <span id="batch-no">BATCH: ---</span>
-        <span id="combo-count">CALCULATING...</span>
-      </div>
-      <div id="barcode"></div>
-
-      <button id="btn-gen" class="btn-main">GENERATE</button>
-    </div>
+  <!-- Connect overlay -->
+  <div id="overlay">
+    <h1>BASEMENT</h1>
+    <p>// DATA_CORE //</p>
+    <button id="btn-init">[ CONNECT ]</button>
   </div>
 
-  <script>
-    // --- DATABASE V107 (EXPANDED) ---
-    const DB = {
-      g: [
-        "Lofi HipHop","UK Drill","Dark Trap","Industrial Techno","Acid House","Boom Bap","Ambient","Phonk","Synthwave","Glitch Hop",
-        "Hardcore","IDM","Jungle","Drum & Bass","Grime","Dungeon Synth","Gabber","Math Rock","Neo-Soul","Dubstep (Old School)",
-        "Hyperpop","Chicago Footwork","Jersey Club","Baltimore Club","Barber Beats","Vaporwave","Future Bass","Riddim","Midwest Emo",
-        "Shoegaze","Nu-Metal","Post-Punk","G-Funk","Cloud Rap","Memphis Phonk","Electro","Breakcore","Neurofunk","Tech House","Minimal",
-        "Trap Metal","Witch House","Ambient Techno","Jazz Rap","Trip Hop","Dub Techno","Electroclash","Deconstructed Club","Leftfield Bass"
-      ],
-      k: [
-        "A Minor","C Minor","F# Minor","E Minor","D Minor","G Minor","Bb Minor","F Minor","C# Minor","Eb Major","G Major","F Major",
-        "No Key (Atonal)","B Phrygian","D Dorian","C Lydian","F# Locrian","G Mixolydian","A Harmonic Minor","E Melodic Minor",
-        "Whole Tone","Pentatonic Minor","Pentatonic Major","Hirajoshi (Jp)","Hungarian Minor","Byzantine","Lydian Dominant","Super Locrian","Diminished"
-      ],
-      t: [
-        "70-90 BPM","120-130 BPM","140 BPM","85 BPM","170+ BPM","110 BPM","Free Tempo","160 BPM","100 BPM",
-        "60 BPM (Sludge)","95 BPM","135 BPM","150 BPM","Ramp (80->120)","Ultra-Slow (40-60)","115 BPM","145 BPM","155 BPM"
-      ],
-      s: [
-        "Intro-A-B-A-Outro","No Intro, Chorus First","Build -> Drop","Loop Based","One Long Take","A-B-C-D","Chorus 1st",
-        "Fade In/Fade Out","Minimal (Subtraction)","30 Sec Loop Only","Start w/ Acapella","False Ending","Through Composed",
-        "Verse-Chorus-Verse-Bridge-Chorus","Percussion Only Intro"
-      ],
-      w: [
-        "NO PRESETS","MONOPHONIC","NO HI-HATS","VOICE ONLY","REVERSE AUDIO","10 MIN LIMIT","ONE SYNTH","NO SNARE",
-        "RESAMPLE 3X","NO GRID","SILENCE (4 Bars)","5 MIN SOUND DESIGN","NO KICK","ONE SAMPLE ONLY","BITCRUSHED (All)","MONO MIX",
-        "NO QUANTIZE","BASS LEAD","100% WET (Master)","SINE WAVES ONLY","HARD PAN (L/C/R)","NO 3RD PARTY PLUGINS","SAMPLE ROULETTE (3x)",
-        "No Drums (Synth Perc)","Foley Only","No Reverb","Sidechain Everything","No Compression","Make a 3/4 Time Beat",
-        "No Automation","Hardware Only","Use a Toy Instrument","No Sub Bass","All Sounds Pitched to C"
-      ]
-    };
+  <!-- App card -->
+  <div id="app">
+    <header class="card">
+      <h1>BRIEF_V107</h1>
+      <div class="meta">
+        <span id="session-id">ID: -----</span><br/>
+        <span>ONLINE</span>
+      </div>
+    </header>
 
-    // --- STATE ---
-    let locks = { g:false, k:false, t:false, s:false, w:false };
-    let currentIndices = { g:0, k:0, t:0, s:0, w:0 };
-    let scrambleIntervals = {};
+    <div class="cell">
+      <div class="info">
+        <span class="label">01 GENRE</span>
+        <span class="value" id="out-g">---</span>
+      </div>
+      <button class="btn-lock" data-id="g">LOCK</button>
+    </div>
 
-    // --- UTILS ---
-    function updateStats(){
-      document.getElementById('batch-no').innerText = `BATCH: ${Math.floor(Math.random()*9999)}`;
-      const total = DB.g.length * DB.k.length * DB.t.length * DB.s.length * DB.w.length;
-      document.getElementById('combo-count').innerText = `${total.toLocaleString()} REALITIES`;
-      generateBarcode();
+    <div class="cell">
+      <div class="info">
+        <span class="label">02 KEY / SCALE</span>
+        <span class="value" id="out-k">---</span>
+      </div>
+      <button class="btn-lock" data-id="k">LOCK</button>
+    </div>
+
+    <div class="cell">
+      <div class="info">
+        <span class="label">03 TEMPO</span>
+        <span class="value" id="out-t">---</span>
+      </div>
+      <button class="btn-lock" data-id="t">LOCK</button>
+    </div>
+
+    <div class="cell">
+      <div class="info">
+        <span class="label">04 STRUCTURE</span>
+        <span class="value" id="out-s">---</span>
+      </div>
+      <button class="btn-lock" data-id="s">LOCK</button>
+    </div>
+
+    <div class="cell" style="border-bottom:none">
+      <div class="info">
+        <span class="label">05 LIMITATION</span>
+        <span class="value" id="out-w">---</span>
+      </div>
+      <button class="btn-lock" data-id="w">LOCK</button>
+    </div>
+
+    <div id="sys-log">
+      <span id="batch-no">BATCH: -----</span>
+      <span id="combo-count">CALCULATING…</span>
+    </div>
+    <div id="barcode"></div>
+
+    <button id="btn-gen" class="btn-main">GENERATE</button>
+  </div>
+
+<script>
+/* =========================
+   DATA
+========================= */
+const DB = {
+  g: [
+    "Lofi HipHop","UK Drill","Dark Trap","Industrial Techno","Acid House","Boom Bap","Ambient","Phonk","Synthwave","Glitch Hop",
+    "Hardcore","IDM","Jungle","Drum & Bass","Grime","Dungeon Synth","Gabber","Math Rock","Neo-Soul","Dubstep (Old School)",
+    "Hyperpop","Chicago Footwork","Jersey Club","Baltimore Club","Barber Beats","Vaporwave","Future Bass","Riddim","Midwest Emo",
+    "Shoegaze","Nu-Metal","Post-Punk","G-Funk","Cloud Rap","Memphis Phonk","Electro","Breakcore","Neurofunk","Tech House","Minimal",
+    "Trap Metal","Witch House","Ambient Techno","Jazz Rap","Trip Hop","Dub Techno","Electroclash","Deconstructed Club","Leftfield Bass"
+  ],
+  k: [
+    "A Minor","C Minor","F# Minor","E Minor","D Minor","G Minor","Bb Minor","F Minor","C# Minor","Eb Major","G Major","F Major",
+    "No Key (Atonal)","B Phrygian","D Dorian","C Lydian","F# Locrian","G Mixolydian","A Harmonic Minor","E Melodic Minor",
+    "Whole Tone","Pentatonic Minor","Pentatonic Major","Hirajoshi (Jp)","Hungarian Minor","Byzantine","Lydian Dominant","Super Locrian","Diminished"
+  ],
+  t: [
+    "70-90 BPM","120-130 BPM","140 BPM","85 BPM","170+ BPM","110 BPM","Free Tempo","160 BPM","100 BPM",
+    "60 BPM (Sludge)","95 BPM","135 BPM","150 BPM","Ramp (80->120)","Ultra-Slow (40-60)","115 BPM","145 BPM","155 BPM"
+  ],
+  s: [
+    "Intro-A-B-A-Outro","No Intro, Chorus First","Build -> Drop","Loop Based","One Long Take","A-B-C-D","Chorus 1st",
+    "Fade In/Fade Out","Minimal (Subtraction)","30 Sec Loop Only","Start w/ Acapella","False Ending","Through Composed",
+    "Verse-Chorus-Verse-Bridge-Chorus","Percussion Only Intro"
+  ],
+  w: [
+    "NO PRESETS","MONOPHONIC","NO HI-HATS","VOICE ONLY","REVERSE AUDIO","10 MIN LIMIT","ONE SYNTH","NO SNARE",
+    "RESAMPLE 3X","NO GRID","SILENCE (4 Bars)","5 MIN SOUND DESIGN","NO KICK","ONE SAMPLE ONLY","BITCRUSHED (All)","MONO MIX",
+    "NO QUANTIZE","BASS LEAD","100% WET (Master)","SINE WAVES ONLY","HARD PAN (L/C/R)","NO 3RD PARTY PLUGINS","SAMPLE ROULETTE (3x)",
+    "No Drums (Synth Perc)","Foley Only","No Reverb","Sidechain Everything","No Compression","Make a 3/4 Time Beat",
+    "No Automation","Hardware Only","Use a Toy Instrument","No Sub Bass","All Sounds Pitched to C"
+  ]
+};
+
+/* =========================
+   STATE
+========================= */
+let locks = { g:false, k:false, t:false, s:false, w:false };
+let currentIndices = { g:0, k:0, t:0, s:0, w:0 };
+let scrambleIntervals = {};
+
+/* =========================
+   HELPERS
+========================= */
+const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789//";
+
+function updateStats(){
+  document.getElementById('batch-no').innerText = `BATCH: ${String(Math.floor(Math.random()*99999)).padStart(5,'0')}`;
+  const total = DB.g.length * DB.k.length * DB.t.length * DB.s.length * DB.w.length;
+  document.getElementById('combo-count').innerText = `${total.toLocaleString()} REALITIES`;
+  generateBarcode();
+}
+
+function scramble(id, final){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (scrambleIntervals[id]) clearInterval(scrambleIntervals[id]);
+
+  let iter = 0;
+  el.classList.add('scrambling');
+
+  scrambleIntervals[id] = setInterval(()=>{
+    el.textContent = final.split("").map((ch,i)=>{
+      if (i < iter) return final[i];
+      return chars[Math.floor(Math.random()*chars.length)];
+    }).join("");
+
+    if (iter >= final.length){
+      clearInterval(scrambleIntervals[id]);
+      el.textContent = final;
+      el.classList.remove('scrambling');
     }
-    function generateBarcode(){
-      const container = document.getElementById('barcode');
-      if(!container) return;
-      container.innerHTML = '';
-      for(let i=0;i<50;i++){
-        const bar = document.createElement('div');
-        bar.className = 'bar';
-        bar.style.width = (Math.random()*6 + 1) + 'px';
-        bar.style.opacity = Math.random() > .6 ? Math.random() : .2;
-        if(Math.random() > .95) bar.style.opacity = 0;
-        container.appendChild(bar);
+    iter += .5;
+  },30);
+}
+
+/* --- Responsive barcode: fills row & redraws on resize --- */
+function generateBarcode(){
+  const container = document.getElementById('barcode');
+  if (!container) return;
+
+  const W = container.clientWidth || 0;
+  container.innerHTML = '';
+
+  let x = 0;
+  while (x < W){
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const w = Math.max(3, Math.floor(Math.random()*8)); // 3-10px
+    bar.style.width = w + 'px';
+    bar.style.opacity = Math.random() > 0.65 ? (0.3 + Math.random()*0.6) : 0.25;
+    container.appendChild(bar);
+    x += w + 2; // + gap (must match CSS gap)
+  }
+}
+
+let __barcodeTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(__barcodeTimer);
+  __barcodeTimer = setTimeout(generateBarcode, 120);
+});
+
+/* =========================
+   INIT / GENERATE
+========================= */
+document.getElementById('btn-init').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-init');
+  btn.textContent = "CONNECTING…";
+  await new Promise(r=>setTimeout(r,400));
+
+  document.getElementById('session-id').textContent =
+    `ID: ${String(Math.floor(Math.random()*99999)).padStart(5,'0')}`;
+  updateStats();
+
+  const overlay = document.getElementById('overlay');
+  overlay.style.opacity = 0;
+  setTimeout(()=>{
+    overlay.style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    triggerGen(false, true); // silent first gen
+  }, 500);
+});
+
+document.getElementById('btn-gen').addEventListener('click', ()=>triggerGen(false));
+
+function triggerGen(skipText=false, silent=false){
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true; btn.textContent = "COMPUTING…";
+
+  if (!skipText){
+    for (const k in DB){
+      if (!locks[k]){
+        const idx = Math.floor(Math.random()*DB[k].length);
+        currentIndices[k] = idx;
+        scramble(`out-${k}`, DB[k][idx]);
       }
     }
+    updateStats();
+  }
 
-    // --- SCRAMBLE ---
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789//";
-    function scramble(id, final){
-      const el = document.getElementById(id);
-      if(!el) return;
-      if(scrambleIntervals[id]) clearInterval(scrambleIntervals[id]);
-      let iter = 0; el.classList.add('scrambling');
-      scrambleIntervals[id] = setInterval(()=>{
-        el.innerText = final.split("").map((l,i)=> i<iter ? final[i] : chars[Math.floor(Math.random()*chars.length)]).join("");
-        if(iter >= final.length){
-          clearInterval(scrambleIntervals[id]); el.innerText = final; el.classList.remove('scrambling');
-        }
-        iter += .5;
-      },30);
-    }
+  setTimeout(()=>{ btn.disabled=false; btn.textContent="GENERATE"; }, 600);
+}
 
-    // --- INIT ---
-    document.getElementById('btn-init').onclick = async ()=>{
-      const btn = document.getElementById('btn-init');
-      btn.innerText = "CONNECTING...";
-      await new Promise(r=>setTimeout(r,400));
-      document.getElementById('session-id').innerText = `ID: ${Math.floor(Math.random()*99999).toString().padStart(5,'0')}`;
-      updateStats();
-      const overlay = document.getElementById('overlay');
-      overlay.style.opacity = 0;
-      setTimeout(()=>{
-        overlay.style.display = 'none';
-        document.getElementById('app').classList.add('visible');
-        triggerGen(false,true); // first silent gen
-      },500);
-    };
-
-    // --- GENERATE ---
-    document.getElementById('btn-gen').onclick = ()=>triggerGen(false);
-    function triggerGen(skipText=false, silent=false){
-      const btn = document.getElementById('btn-gen');
-      btn.disabled = true; btn.innerText = "COMPUTING...";
-      if(!skipText){
-        for(const key in DB){
-          if(!locks[key]){
-            const idx = Math.floor(Math.random()*DB[key].length);
-            currentIndices[key] = idx;
-            scramble(`out-${key}`, DB[key][idx]);
-          }
-        }
-        updateStats();
-      }
-      setTimeout(()=>{ btn.disabled=false; btn.innerText="GENERATE"; }, 600);
-    }
-
-    // --- LOCKS ---
-    document.querySelectorAll('.btn-lock').forEach(b=>{
-      b.onclick = (e)=>{
-        const k = e.target.dataset.id;
-        locks[k] = !locks[k];
-        e.target.innerText = locks[k] ? "LOCKED" : "LOCK";
-        e.target.classList.toggle('locked');
-      };
-    });
-  </script>
+/* Locks */
+document.querySelectorAll('.btn-lock').forEach(b=>{
+  b.addEventListener('click', e=>{
+    const key = e.currentTarget.dataset.id;
+    locks[key] = !locks[key];
+    e.currentTarget.textContent = locks[key] ? "LOCKED" : "LOCK";
+    e.currentTarget.classList.toggle('locked', locks[key]);
+  });
+});
+</script>
 </body>
 </html>
