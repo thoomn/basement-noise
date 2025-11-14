@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BASEMENT // DATA CORE</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --bg: #050505;
+            --fg: #e0e0e0;
+            --dim: #444;
+            --border: 1px solid #333;
+            --highlight: #fff;
+            --font-head: 'Inter', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+            --processing-color: #888; 
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg); color: var(--fg); font-family: var(--font-mono);
+            min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 1rem; overflow: hidden;
+        }
+
+        /* --- BACKGROUND --- */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none; z-index: -2;
+        }
+        
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: -1;
+        }
+
+        /* --- OVERLAYS --- */
+        #overlay {
+            position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.4s ease;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        #app { 
+            width: 100%; max-width: 420px; opacity: 0; 
+            display: flex; flex-direction: column; gap: 0;
+            border-top: 2px solid var(--fg); border-bottom: 2px solid var(--fg);
+            background: rgba(5,5,5,0.85); backdrop-filter: blur(10px);
+            position: relative; z-index: 10;
+        }
+        
+        #app.visible { animation: turn-on 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        @keyframes turn-on {
+            0% { opacity: 0; transform: scaleY(0.9); }
+            100% { opacity: 1; transform: scaleY(1); }
+        }
+
+        /* --- HEADER --- */
+        header { 
+            padding: 1.2rem 0 0.8rem 0; border-bottom: var(--border); 
+            display: flex; justify-content: space-between; align-items: baseline;
+        }
+        h1 { font-family: var(--font-head); font-weight: 900; font-size: 1.8rem; line-height: 0.8; letter-spacing: -2px; margin: 0; }
+        .meta { font-size: 0.55rem; color: var(--dim); text-transform: uppercase; text-align: right; letter-spacing: 1px; }
+
+        /* --- GRID SYSTEM --- */
+        .cell {
+            display: grid; grid-template-columns: 1fr auto; align-items: center;
+            padding: 0.7rem 0; border-bottom: var(--border); position: relative;
+        }
+        .cell:last-child { border-bottom: none; }
+
+        .info { display: flex; flex-direction: column; }
+        .label { font-size: 0.5rem; color: var(--dim); font-weight: bold; letter-spacing: 1px; }
+        .value { 
+            font-family: var(--font-head); font-weight: 800; font-size: 1.3rem; 
+            letter-spacing: -1px; text-transform: uppercase; color: var(--fg);
+            transition: color 0.1s; line-height: 1; min-height: 1.3rem;
+        }
+        .value.scrambling { color: var(--dim); }
+
+        /* --- BUTTONS --- */
+        button {
+            background: transparent; border: 1px solid var(--dim); color: var(--dim);
+            font-family: var(--font-mono); font-size: 0.65rem; cursor: pointer; text-transform: uppercase;
+            padding: 0.4rem 0.8rem; transition: 0.2s; letter-spacing: 1px;
+        }
+        button:hover { border-color: var(--fg); color: var(--fg); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--dim); color: var(--dim); }
+        
+        .btn-lock { border: none; padding: 5px; font-size: 0.6rem; }
+        .btn-lock:hover { background: transparent; color: var(--fg); }
+        .btn-lock.locked { color: var(--fg); font-weight: bold; }
+
+        .btn-main {
+            width: 100%; background: var(--fg); color: var(--bg); border: none;
+            font-family: var(--font-head); font-weight: 900; font-size: 1rem; padding: 1.2rem;
+            letter-spacing: 1px; margin-top: 1rem;
+        }
+        .btn-main:hover { background: var(--highlight); color: var(--bg); box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+
+        /* --- FOOTER --- */
+        #sys-log {
+            font-size: 0.55rem; color: var(--dim); padding-top: 0.5rem; 
+            border-top: var(--border); margin-top: 1.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        #barcode {
+            width: 100%; height: 20px; display: flex; gap: 2px; 
+            margin-top: 10px; opacity: 0.6;
+        }
+        .bar { background: var(--fg); height: 100%; }
+
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h1 style="margin-bottom: 1rem; letter-spacing: -2px;">BASEMENT</h1>
+        <p style="font-size: 0.6rem; color: var(--dim); margin-bottom: 2rem; letter-spacing: 2px;">// DATA_CORE //</p>
+        <button id="btn-init" style="border: 1px solid var(--fg); color: var(--fg); padding: 1rem 2rem; font-weight: bold;">[ CONNECT ]</button>
+    </div>
+
+    <div id="app">
+        <header>
+            <h1>BRIEF_V107</h1>
+            <div class="meta">
+                <span id="session-id">ID: ---</span><br>
+                <span>ONLINE</span>
+            </div>
+        </header>
+
+        <div class="cell">
+            <div class="info"><span class="label">01 GENRE</span><span class="value" id="out-g">---</span></div>
+            <button class="btn-lock" data-id="g">LOCK</button>
+        </div>
+        <div class="cell">
+            <div class="info"><span class="label">02 KEY / SCALE</span><span class="value" id="out-k">---</span></div>
+            <button class="btn-lock" data-id="k">LOCK</button>
+        </div>
+        <div class="cell">
+            <div class="info"><span class="label">03 TEMPO</span><span class="value" id="out-t">---</span></div>
+            <button class="btn-lock" data-id="t">LOCK</button>
+        </div>
+        <div class="cell">
+            <div class="info"><span class="label">04 STRUCTURE</span><span class="value" id="out-s">---</span></div>
+            <button class="btn-lock" data-id="s">LOCK</button>
+        </div>
+
+        <div class="cell" style="border-bottom: none;">
+            <div class="info">
+                <span class="label">05 LIMITATION</span>
+                <span class="value" id="out-w">---</span>
+            </div>
+            <button class="btn-lock" data-id="w">LOCK</button>
+        </div>
+
+        <div id="sys-log">
+            <span id="batch-no">BATCH: ---</span>
+            <span id="combo-count">CALCULATING...</span>
+        </div>
+        <div id="barcode"></div>
+        
+        <button id="btn-gen" class="btn-main">GENERATE</button>
+    </div>
+
+<script>
+// --- DATABASE V107 (EXPANDED) ---
+const DB = {
+    g: [
+        "Lofi HipHop", "UK Drill", "Dark Trap", "Industrial Techno", "Acid House", "Boom Bap", "Ambient", "Phonk", "Synthwave", "Glitch Hop", 
+        "Hardcore", "IDM", "Jungle", "Drum & Bass", "Grime", "Dungeon Synth", "Gabber", "Math Rock", "Neo-Soul", "Dubstep (Old School)", 
+        "Hyperpop", "Chicago Footwork", "Jersey Club", "Baltimore Club", "Barber Beats", "Vaporwave", "Future Bass", "Riddim", "Midwest Emo",
+        "Shoegaze", "Nu-Metal", "Post-Punk", "G-Funk", "Cloud Rap", "Memphis Phonk", "Electro", "Breakcore", "Neurofunk", "Tech House", "Minimal",
+        "Trap Metal", "Witch House", "Ambient Techno", "Jazz Rap", "Trip Hop", "Dub Techno", "Electroclash", "Deconstructed Club", "Leftfield Bass"
+    ],
+    k: [
+        "A Minor", "C Minor", "F# Minor", "E Minor", "D Minor", "G Minor", "Bb Minor", "F Minor", "C# Minor", "Eb Major", "G Major", "F Major",
+        "No Key (Atonal)", "B Phrygian", "D Dorian", "C Lydian", "F# Locrian", "G Mixolydian", "A Harmonic Minor", "E Melodic Minor",
+        "Whole Tone", "Pentatonic Minor", "Pentatonic Major", "Hirajoshi (Jp)", "Hungarian Minor", "Byzantine", "Lydian Dominant", "Super Locrian", "Diminished"
+    ],
+    t: [
+        "70-90 BPM", "120-130 BPM", "140 BPM", "85 BPM", "170+ BPM", "110 BPM", "Free Tempo", "160 BPM", "100 BPM", 
+        "60 BPM (Sludge)", "95 BPM", "135 BPM", "150 BPM", "Ramp (80->120)", "Ultra-Slow (40-60)", "115 BPM", "145 BPM", "155 BPM"
+    ],
+    s: [
+        "Intro-A-B-A-Outro", "No Intro, Chorus First", "Build -> Drop", "Loop Based", "One Long Take", "A-B-C-D", "Chorus 1st", 
+        "Fade In/Fade Out", "Minimal (Subtraction)", "30 Sec Loop Only", "Start w/ Acapella", "False Ending", "Through Composed", 
+        "Verse-Chorus-Verse-Bridge-Chorus", "Percussion Only Intro"
+    ],
+    w: [
+        "NO PRESETS", "MONOPHONIC", "NO HI-HATS", "VOICE ONLY", "REVERSE AUDIO", "10 MIN LIMIT", "ONE SYNTH", "NO SNARE", 
+        "RESAMPLE 3X", "NO GRID", "SILENCE (4 Bars)", "5 MIN SOUND DESIGN", "NO KICK", "ONE SAMPLE ONLY", "BITCRUSHED (All)", "MONO MIX",
+        "NO QUANTIZE", "BASS LEAD", "100% WET (Master)", "SINE WAVES ONLY", "HARD PAN (L/C/R)", "NO 3RD PARTY PLUGINS", "SAMPLE ROULETTE (3x)",
+        "No Drums (Synth Perc)", "Foley Only", "No Reverb", "Sidechain Everything", "No Compression", "Make a 3/4 Time Beat", 
+        "No Automation", "Hardware Only", "Use a Toy Instrument", "No Sub Bass", "All Sounds Pitched to C"
+    ]
+};
+
+// --- STATE ---
+let locks = { g:false, k:false, t:false, s:false, w:false };
+let currentIndices = { g:0, k:0, t:0, s:0, w:0 };
+let scrambleIntervals = {};
+
+// --- UTILS ---
+function updateStats() {
+    document.getElementById('batch-no').innerText = `BATCH: ${Math.floor(Math.random()*9999)}`;
+    const total = DB.g.length * DB.k.length * DB.t.length * DB.s.length * DB.w.length;
+    document.getElementById('combo-count').innerText = `${total.toLocaleString()} REALITIES`;
+    generateBarcode();
+}
+
+function generateBarcode() {
+    const container = document.getElementById('barcode');
+    if (!container) return;
+    container.innerHTML = '';
+    for(let i=0; i<50; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const width = Math.random() * 6 + 1;
+        bar.style.width = width + 'px';
+        bar.style.opacity = Math.random() > 0.6 ? Math.random() : 0.2; 
+        if (Math.random() > 0.95) bar.style.opacity = 0; 
+        container.appendChild(bar);
+    }
+}
+
+// --- SCRAMBLE ---
+const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789//";
+function scramble(id, final) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(scrambleIntervals[id]) clearInterval(scrambleIntervals[id]);
+    let iter = 0;
+    el.classList.add('scrambling');
+    scrambleIntervals[id] = setInterval(() => {
+        el.innerText = final.split("").map((l, i) => {
+            if(i < iter) return final[i];
+            return chars[Math.floor(Math.random() * chars.length)];
+        }).join("");
+        if(iter >= final.length) { 
+            clearInterval(scrambleIntervals[id]); 
+            el.innerText = final; 
+            el.classList.remove('scrambling');
+        }
+        iter += 1/2;
+    }, 30);
+}
+
+// --- INIT ---
+document.getElementById('btn-init').onclick = async () => {
+    const btn = document.getElementById('btn-init');
+    btn.innerText = "CONNECTING...";
+    
+    // Fake boot sequence (no audio context needed)
+    await new Promise(r => setTimeout(r, 400));
+    
+    document.getElementById('session-id').innerText = `ID: ${Math.floor(Math.random()*99999).toString().padStart(5,'0')}`;
+    updateStats();
+
+    document.getElementById('overlay').style.opacity = 0;
+    setTimeout(() => {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('app').classList.add('visible');
+        triggerGen(false, true); // Silent first gen
+    }, 500);
+};
+
+// --- GENERATE ---
+document.getElementById('btn-gen').onclick = () => triggerGen(false);
+
+function triggerGen(skipText = false, silentMode = false) {
+    const btn = document.getElementById('btn-gen');
+    btn.disabled = true; btn.innerText = "COMPUTING...";
+
+    // Update indices and text
+    if(!skipText) {
+        for(let k in DB) {
+            if(!locks[k]) {
+                const idx = Math.floor(Math.random() * DB[k].length);
+                currentIndices[k] = idx;
+                const val = DB[k][idx];
+                scramble(`out-${k}`, val);
+            }
+        }
+        updateStats();
+    }
+
+    setTimeout(() => {
+        btn.disabled = false; btn.innerText = "GENERATE";
+    }, 600); // Scramble duration
+}
+
+// --- LOCKS ---
+document.querySelectorAll('.btn-lock').forEach(b => {
+    b.onclick = (e) => {
+        const k = e.target.dataset.id; 
+        locks[k] = !locks[k];
+        e.target.innerText = locks[k] ? "LOCKED" : "LOCK";
+        e.target.classList.toggle('locked');
+    }
+});
+
+</script>
+</body>
+</html>
